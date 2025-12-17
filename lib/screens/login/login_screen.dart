@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/screens/home/home_screen.dart';
-import 'package:sajilo_sewa/screens/register/register_screen.dart';
+import 'package:sajilo_sewa/routes/app_routes.dart';
 import 'widgets/email_field.dart';
 import 'widgets/password_field.dart';
 import 'widgets/remember_forgot_row.dart';
@@ -99,12 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 24),
           SignInButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
-              );
+              Navigator.pushReplacementNamed(context, AppRoutes.main);
             },
           ),
+
           const SizedBox(height: 24),
           const DividerText(),
           const SizedBox(height: 24),
@@ -131,10 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 24),
           SignUpText(
             onSignUp: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RegisterScreen()),
-              );
+              Navigator.pushNamed(context, AppRoutes.register);
             },
           ),
         ],

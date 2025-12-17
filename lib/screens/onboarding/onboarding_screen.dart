@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../routes/app_routes.dart';
 import 'widgets/onboard_page.dart';
 import 'widgets/indicator.dart';
-import '../login/login_screen.dart'; // import your login screen
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,25 +18,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Welcome',
       'subtitle': 'Book your home services easily',
-      'image': '', // add your image path if available
+      'image': '', // add image path if needed
     },
     {
       'title': 'Fast & Reliable',
-      'subtitle': 'Trusted service providers',
+      'subtitle': 'Trusted service providers near you',
       'image': '',
     },
     {
       'title': 'Get Started',
-      'subtitle': 'Enjoy convenient services',
+      'subtitle': 'Enjoy convenient home services',
       'image': '',
     },
   ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onNextPressed() {
+    if (currentIndex == pages.length - 1) {
+      // ✅ Go to Login (NOT Home, NOT Bottom Nav yet)
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    } else {
+      _controller.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
+          /// Pages
           Expanded(
             child: PageView.builder(
               controller: _controller,
@@ -50,11 +69,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 return OnboardPage(
                   title: pages[index]['title']!,
                   subtitle: pages[index]['subtitle']!,
-                  imagePath: pages[index]['image']!, // optional
+                  imagePath: pages[index]['image']!,
                 );
               },
             ),
           ),
+
+          /// Indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -62,28 +83,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               (index) => Indicator(isActive: index == currentIndex),
             ),
           ),
+
           const SizedBox(height: 24),
+
+          /// Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  if (currentIndex == pages.length - 1) {
-                    // Navigate to LoginScreen on last page
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  } else {
-                    // Move to next page
-                    _controller.nextPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeIn,
-                    );
-                  }
-                },
+                onPressed: _onNextPressed,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -99,6 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
+
           const SizedBox(height: 40),
         ],
       ),
