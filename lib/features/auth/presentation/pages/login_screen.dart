@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/divider_text.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/email_field.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/password_field.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/remember_forgot_row.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/sign_in_button.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/sign_up_text.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/social_login_button.dart';
+import 'package:sajilo_sewa/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/divider_text.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/email_field.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/password_field.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/remember_forgot_row.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/sign_in_button.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/sign_up_text.dart';
+import 'package:sajilo_sewa/features/auth/presentation/widgets/login/social_login_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -44,14 +46,15 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              shape: BoxShape.circle,
+            width: 120,
+            height: 120,
+            decoration: const BoxDecoration(shape: BoxShape.circle),
+            child: Image.asset(
+              'assets/images/sajilo_sewa_logo.png',
+              fit: BoxFit.contain,
             ),
-            child: const Icon(Icons.home, size: 40, color: Colors.white),
           ),
+
           const SizedBox(height: 20),
           const Text(
             'Welcome Back',
@@ -97,8 +100,31 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 24),
           SignInButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.main);
+            onPressed: () async {
+              final email = _emailController.text.trim();
+              final password = _passwordController.text.trim();
+              if (email.isEmpty || password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please enter email and password"),
+                  ),
+                );
+                return;
+              }
+              final result = await context.read<AuthViewModel>().login(
+                email,
+                password,
+              );
+              result.fold(
+                (failure) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(failure.message)));
+                },
+                (_) {
+                  Navigator.pushReplacementNamed(context, AppRoutes.main);
+                },
+              );
             },
           ),
 
