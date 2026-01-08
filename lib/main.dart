@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
-import 'features/auth/data/datasources/service_local_datasource.dart';
+import 'core/services/hive/hive_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
+  final result = await HiveService.instance.init();
+  result.fold((failure) {
+    debugPrint('Hive init failed: ${failure.message}');
+  }, (_) {});
 
-  await ServiceLocalDatasource().seedServices();
-
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }

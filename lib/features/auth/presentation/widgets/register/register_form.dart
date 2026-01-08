@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../domain/entities/user_entity.dart';
-import '../../view_model/auth_view_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_providers.dart';
+import '../../../../../core/services/hive/hive_service.dart';
+import 'register_input.dart';
 import 'register_role_selector.dart';
-import 'register_text_field.dart';
-import 'service_input_field.dart';
-import 'register_terms_checkbox.dart';
-import 'register_submit_button.dart';
-import 'register_social_section.dart';
+import 'profession_field.dart';
+import 'terms_checkbox.dart';
+import 'create_account_button.dart';
+import 'social_buttons.dart';
+import 'signin_link.dart';
 
-class RegisterForm extends StatefulWidget {
+enum RegisterRole { client, provider }
+
+class RegisterForm extends ConsumerStatefulWidget {
   const RegisterForm({super.key});
 
   @override
-  State<RegisterForm> createState() => _RegisterFormState();
+  ConsumerState<RegisterForm> createState() => _RegisterFormState();
 }
 
-class _RegisterFormState extends State<RegisterForm> {
+class _RegisterFormState extends ConsumerState<RegisterForm> {
   final _formKey = GlobalKey<FormState>();
 
   final fullName = TextEditingController();
@@ -24,9 +27,12 @@ class _RegisterFormState extends State<RegisterForm> {
   final phone = TextEditingController();
   final password = TextEditingController();
   final confirmPassword = TextEditingController();
-  final service = TextEditingController();
+  final profession = TextEditingController();
 
-  String userType = 'client';
+  RegisterRole role = RegisterRole.client;
+
+  bool hidePass = true;
+  bool hideConfirmPass = true;
   bool agree = false;
 
   @override
@@ -36,153 +42,208 @@ class _RegisterFormState extends State<RegisterForm> {
     phone.dispose();
     password.dispose();
     confirmPassword.dispose();
-    service.dispose();
+    profession.dispose();
     super.dispose();
+  }
+
+  void _snack(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  bool _isStrongPassword(String value) {
+    final regex = RegExp(
+      r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{7,}$',
+    );
+    return regex.hasMatch(value);
+  }
+
+  Future<void> _openProfessionPicker() async {
+    final result = await HiveService.instance.getProfessions();
+
+    result.fold((f) => _snack(f.message ?? 'Failed to load professions'), (
+      items,
+    ) async {
+      await showModalBottomSheet(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => ListView(
+          padding: const EdgeInsets.all(12),
+          children: items
+              .map(
+                (p) => ListTile(
+                  title: Text(p),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    setState(() => profession.text = p);
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      );
+    });
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!agree) {
+      _snack("Please accept the terms");
+      return;
+    }
+
+    await ref
+        .read(authControllerProvider.notifier)
+        .signUp(
+          fullName: fullName.text.trim(),
+          email: email.text.trim(),
+          password: password.text,
+          role: role == RegisterRole.client ? 'client' : 'provider',
+          profession: role == RegisterRole.provider
+              ? profession.text.trim()
+              : null,
+        );
+
+    final state = ref.read(authControllerProvider);
+
+    state.when(
+      data: (v) {
+        if (v == 'success') {
+          _snack("Account Created");
+          Navigator.pop(context);
+        }
+      },
+      loading: () {},
+      error: (e, _) => _snack(e.toString()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(authControllerProvider).isLoading;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Form(
         key: _formKey,
         child: Column(
           children: [
-            RegisterRoleSelector(
-              value: userType,
-              onChanged: (v) {
-                setState(() {
-                  userType = v;
-                  service.clear();
-                });
-              },
-            ),
-
-            // FULL NAME
-            RegisterTextField(
+            RegisterInput(
               label: "Full Name",
-              hint: "Enter your full name",
               controller: fullName,
+              hint: "Enter your full name",
               icon: Icons.person_outline,
-              validator: (v) =>
-                  v == null || v.isEmpty ? "Please enter your name" : null,
+              validator: (v) => v!.isEmpty ? "Please enter your name" : null,
             ),
+            const SizedBox(height: 16),
 
-            // EMAIL
-            RegisterTextField(
+            RegisterInput(
               label: "Email Address",
-              hint: "example@email.com",
               controller: email,
+              hint: "Enter your email",
               icon: Icons.email_outlined,
               validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return "Please enter your email";
-                }
+                if (v!.isEmpty) return "Please enter your email";
                 if (!RegExp(r"^[^@]+@[^@]+\.[^@]+").hasMatch(v)) {
                   return "Enter a valid email";
                 }
                 return null;
               },
             ),
+            const SizedBox(height: 16),
 
-            // PHONE
-            RegisterTextField(
+            RegisterInput(
               label: "Phone Number",
-              hint: "98XXXXXXXX",
               controller: phone,
+              hint: "+977-98XXXXXXX",
               icon: Icons.phone_outlined,
-              keyboardType: TextInputType.number,
               validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return "Please enter phone number";
-                }
-                if (!RegExp(r'^\d{10}$').hasMatch(v)) {
-                  return "Phone number must be exactly 10 digits";
+                if (v!.isEmpty) return "Please enter your phone number";
+                if (!RegExp(r"^\+977-9\d{9}$").hasMatch(v)) {
+                  return "Enter a valid Nepali phone number";
                 }
                 return null;
               },
             ),
+            const SizedBox(height: 16),
 
-            if (userType == 'provider') ServiceInputField(controller: service),
-
-            // PASSWORD
-            RegisterTextField(
+            RegisterInput(
               label: "Password",
-              hint: "Enter your password",
               controller: password,
+              hint: "Create a strong password",
               icon: Icons.lock_outline,
-              obscure: true,
+              obscure: hidePass,
+              suffix: GestureDetector(
+                onTap: () => setState(() => hidePass = !hidePass),
+                child: Icon(
+                  hidePass
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+              ),
               validator: (v) {
-                if (v == null || v.isEmpty) {
-                  return "Please enter password";
+                if (v!.isEmpty) return "Please enter a password";
+                if (v.length < 7) {
+                  return "Password must be at least 7 characters long";
                 }
-                if (!RegExp(
-                  r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{7,}$',
-                ).hasMatch(v)) {
-                  return "Password must have 7+ chars, 1 capital, 1 number & 1 symbol";
+                if (!_isStrongPassword(v)) {
+                  return "Password must contain at least one uppercase letter, one number, and one special character";
                 }
                 return null;
               },
             ),
+            const SizedBox(height: 16),
 
-            // CONFIRM PASSWORD
-            RegisterTextField(
+            RegisterInput(
               label: "Confirm Password",
-              hint: "Re-enter your password",
               controller: confirmPassword,
+              hint: "Confirm your password",
               icon: Icons.lock_outline,
-              obscure: true,
+              obscure: hideConfirmPass,
+              suffix: GestureDetector(
+                onTap: () => setState(() => hideConfirmPass = !hideConfirmPass),
+                child: Icon(
+                  hideConfirmPass
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+              ),
               validator: (v) =>
                   v != password.text ? "Passwords do not match" : null,
             ),
+            const SizedBox(height: 16),
 
-            RegisterTermsCheckbox(
-              value: agree,
-              onChanged: (v) => setState(() => agree = v),
+            RegisterRoleSelector(
+              role: role,
+              onChanged: (r) => setState(() => role = r),
             ),
 
-            RegisterSubmitButton(onPressed: () => _submit(context)),
+            if (role == RegisterRole.provider) ...[
+              const SizedBox(height: 10),
+              ProfessionField(
+                controller: profession,
+                onOpenPicker: _openProfessionPicker,
+              ),
+            ],
 
-            const RegisterSocialSection(),
+            const SizedBox(height: 16),
+
+            TermsCheckbox(
+              value: agree,
+              onChanged: (v) => setState(() => agree = v),
+              onTapTerms: () {},
+            ),
+
+            const SizedBox(height: 24),
+
+            CreateAccountButton(isLoading: isLoading, onTap: _submit),
+
+            const SizedBox(height: 24),
+
+            const SocialButtons(),
+            const SizedBox(height: 24),
+            const SignInLink(),
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _submit(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (!agree) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please accept the terms")));
-      return;
-    }
-
-    final user = UserEntity(
-      fullName: fullName.text,
-      email: email.text,
-      phone: phone.text,
-      password: password.text,
-      userType: userType,
-      service: userType == 'provider' ? service.text : null,
-    );
-
-    final result = await context.read<AuthViewModel>().signUp(user);
-
-    result.fold(
-      (failure) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
-      },
-      (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Account created successfully")),
-        );
-        Navigator.pop(context);
-      },
     );
   }
 }

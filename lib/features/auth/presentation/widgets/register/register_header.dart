@@ -14,10 +14,13 @@ class RegisterHeader extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 24,
-                  color: Colors.black,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 24,
+                    color: Colors.black,
+                  ),
                 ),
               ),
               const Expanded(
@@ -37,13 +40,21 @@ class RegisterHeader extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        // SAJILO SEWA LOGO
-        Image.asset(
-          'assets/images/sajilo_sewa_logo.png',
-          height: 120, // 👈 increase/decrease if needed
-          fit: BoxFit.contain,
+        // Icon circle
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF5B4FFF), Color(0xFF8B5CF6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.person_add, size: 40, color: Colors.white),
         ),
 
         const SizedBox(height: 24),

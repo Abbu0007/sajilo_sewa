@@ -1,39 +1,42 @@
 import 'package:flutter/material.dart';
+import 'register_form.dart';
 
 class RegisterRoleSelector extends StatelessWidget {
-  final String value;
-  final ValueChanged<String> onChanged;
+  final RegisterRole role;
+  final ValueChanged<RegisterRole> onChanged;
 
   const RegisterRoleSelector({
     super.key,
-    required this.value,
+    required this.role,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Register As",
-          style: TextStyle(fontWeight: FontWeight.w600),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Register As",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
         Row(
           children: [
             Expanded(
-              child: RadioListTile(
+              child: RadioListTile<RegisterRole>(
+                value: RegisterRole.client,
+                groupValue: role,
                 title: const Text("Client"),
-                value: 'client',
-                groupValue: value,
                 onChanged: (v) => onChanged(v!),
               ),
             ),
             Expanded(
-              child: RadioListTile(
-                title: const Text("Service Provider"),
-                value: 'provider',
-                groupValue: value,
+              child: RadioListTile<RegisterRole>(
+                value: RegisterRole.provider,
+                groupValue: role,
+                title: const Text("Provider"),
                 onChanged: (v) => onChanged(v!),
               ),
             ),

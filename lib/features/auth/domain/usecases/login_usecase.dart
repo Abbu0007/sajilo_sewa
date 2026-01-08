@@ -1,14 +1,15 @@
-import 'package:either_dart/either.dart';
+import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../entities/user_entity.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../repositories/auth_repository.dart';
 
 class LoginUseCase {
   final AuthRepository repository;
-
   LoginUseCase(this.repository);
 
-  Future<Either<Failure, UserEntity>> call(String email, String password) {
-    return repository.login(email, password);
+  Future<Either<Failure, String>> call({
+    required String email,
+    required String password,
+  }) {
+    return repository.login(email: email, password: password);
   }
 }
