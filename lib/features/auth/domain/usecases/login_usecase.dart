@@ -3,7 +3,8 @@ import '../../../../core/error/failures.dart';
 import '../repositories/auth_repository.dart';
 
 class LoginUseCase {
-  final AuthRepository repository;
+  final IAuthRepository repository;
+
   LoginUseCase(this.repository);
 
   Future<Either<Failure, String>> call({

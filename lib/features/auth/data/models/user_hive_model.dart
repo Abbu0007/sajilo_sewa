@@ -23,6 +23,9 @@ class UserHiveModel {
   final String? profession; // only for provider
 
   @HiveField(6)
+  final String? phone;
+
+  @HiveField(7)
   final DateTime createdAt;
 
   UserHiveModel({
@@ -32,6 +35,7 @@ class UserHiveModel {
     required this.password,
     required this.role,
     this.profession,
+    this.phone,
     required this.createdAt,
   });
 }

@@ -1,10 +1,11 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
+import 'package:sajilo_sewa/core/error/failures.dart';
 
-abstract class AuthRepository {
-  Future<Either<Failure, void>> signUp({
+abstract interface class IAuthRepository {
+  Future<Either<Failure, Unit>> signUp({
     required String fullName,
     required String email,
+    required String phone,
     required String password,
     required String role,
     String? profession,
@@ -15,5 +16,5 @@ abstract class AuthRepository {
     required String password,
   });
 
-  Future<Either<Failure, void>> logout();
+  Future<Either<Failure, Unit>> logout();
 }

@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../constants/hive_table_constants.dart';
 import '../../error/failures.dart';
+import '../../services/storage/user_session_service.dart';
 import '../../../features/auth/data/models/user_hive_model.dart';
 
 class HiveService {
@@ -25,7 +26,6 @@ class HiveService {
       }
 
       await Hive.openBox<UserHiveModel>(HiveTableConstants.usersBox);
-      await Hive.openBox(HiveTableConstants.sessionBox);
       await Hive.openBox<String>(HiveTableConstants.professionsBox);
 
       await _createAdminIfNotExists();
@@ -47,6 +47,7 @@ class HiveService {
       id: 'admin',
       fullName: 'Admin',
       email: key,
+      phone: '0000000000',
       password: adminPassword,
       role: 'admin',
       profession: null,
@@ -56,9 +57,48 @@ class HiveService {
     await usersBox.put(key, admin);
   }
 
+  Future<Either<Failure, Unit>> cacheUserFromApi({
+    required String id,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String role,
+    String? profession,
+    required String token,
+  }) async {
+    try {
+      final usersBox = Hive.box<UserHiveModel>(HiveTableConstants.usersBox);
+      final normalizedEmail = email.trim().toLowerCase();
+
+      final user = UserHiveModel(
+        id: id,
+        fullName: fullName.trim(),
+        email: normalizedEmail,
+        phone: phone.trim(),
+        password: '', // ✅ do not store API password
+        role: role,
+        profession: profession,
+        createdAt: DateTime.now(),
+      );
+
+      await usersBox.put(normalizedEmail, user);
+
+      await UserSessionService.instance.saveSession(
+        userKey: normalizedEmail,
+        role: role,
+        token: token,
+      );
+
+      return right(unit);
+    } catch (e) {
+      return left(CacheFailure(message: 'Cache user failed: $e'));
+    }
+  }
+
   Future<Either<Failure, Unit>> signUp({
     required String fullName,
     required String email,
+    required String phone,
     required String password,
     required String role, // client | provider
     String? profession,
@@ -89,6 +129,7 @@ class HiveService {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         fullName: fullName.trim(),
         email: normalizedEmail,
+        phone: phone.trim(),
         password: password,
         role: role,
         profession: role == 'provider' ? profession?.trim() : null,
@@ -97,9 +138,12 @@ class HiveService {
 
       await usersBox.put(normalizedEmail, user);
 
-      // Auto-login
-      final sessionBox = Hive.box(HiveTableConstants.sessionBox);
-      await sessionBox.put(HiveTableConstants.sessionUserKey, normalizedEmail);
+      // offline session (no token)
+      await UserSessionService.instance.saveSession(
+        userKey: normalizedEmail,
+        role: role,
+        token: '',
+      );
 
       return right(unit);
     } catch (e) {
@@ -124,8 +168,12 @@ class HiveService {
         return left(AuthFailure(message: 'Invalid credentials.'));
       }
 
-      final sessionBox = Hive.box(HiveTableConstants.sessionBox);
-      await sessionBox.put(HiveTableConstants.sessionUserKey, normalizedEmail);
+      // offline session (no token)
+      await UserSessionService.instance.saveSession(
+        userKey: normalizedEmail,
+        role: user.role,
+        token: '',
+      );
 
       return right(user.role);
     } catch (e) {
@@ -135,11 +183,30 @@ class HiveService {
 
   Future<Either<Failure, Unit>> logout() async {
     try {
-      final sessionBox = Hive.box(HiveTableConstants.sessionBox);
-      await sessionBox.delete(HiveTableConstants.sessionUserKey);
+      await UserSessionService.instance.clearSession();
       return right(unit);
     } catch (e) {
       return left(CacheFailure(message: 'Logout failed: $e'));
+    }
+  }
+
+  Future<Either<Failure, UserHiveModel>> getSessionUser() async {
+    try {
+      final key = UserSessionService.instance.getUserKey();
+      if (key == null || key.trim().isEmpty) {
+        return left(CacheFailure(message: 'No active session.'));
+      }
+
+      final usersBox = Hive.box<UserHiveModel>(HiveTableConstants.usersBox);
+      final user = usersBox.get(key.trim().toLowerCase());
+
+      if (user == null) {
+        return left(CacheFailure(message: 'Session user not found.'));
+      }
+
+      return right(user);
+    } catch (e) {
+      return left(CacheFailure(message: 'Load session user failed: $e'));
     }
   }
 
