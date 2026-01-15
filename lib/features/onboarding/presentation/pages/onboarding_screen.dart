@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
+import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
 import 'package:sajilo_sewa/features/onboarding/presentation/widgets/indicator.dart';
 import 'package:sajilo_sewa/features/onboarding/presentation/widgets/onboard_page.dart';
 
@@ -18,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'title': 'Welcome',
       'subtitle': 'Book your home services easily',
-      'image': '', // add image path if needed
+      'image': '',
     },
     {
       'title': 'Fast & Reliable',
@@ -38,9 +39,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _onNextPressed() {
+  Future<void> _onNextPressed() async {
     if (currentIndex == pages.length - 1) {
-      // ✅ Go to Login (NOT Home, NOT Bottom Nav yet)
+      await UserSessionService.instance.setOnboardingDone(true);
+
+      if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.login);
     } else {
       _controller.nextPage(
@@ -55,15 +58,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Column(
         children: [
-          /// Pages
           Expanded(
             child: PageView.builder(
               controller: _controller,
               itemCount: pages.length,
               onPageChanged: (index) {
-                setState(() {
-                  currentIndex = index;
-                });
+                setState(() => currentIndex = index);
               },
               itemBuilder: (context, index) {
                 return OnboardPage(
@@ -74,8 +74,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
           ),
-
-          /// Indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
@@ -83,10 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               (index) => Indicator(isActive: index == currentIndex),
             ),
           ),
-
           const SizedBox(height: 24),
-
-          /// Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: SizedBox(
@@ -109,7 +104,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 40),
         ],
       ),
