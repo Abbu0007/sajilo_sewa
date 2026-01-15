@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
 import 'core/services/hive/hive_service.dart';
+import 'core/services/storage/user_session_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final result = await HiveService.instance.init();
-  result.fold((failure) {
-    debugPrint('Hive init failed: ${failure.message}');
-  }, (_) {});
+
+  await UserSessionService.instance.init();
+
+  final hiveRes = await HiveService.instance.init();
+  hiveRes.fold((f) => debugPrint('Hive init failed: ${f.message}'), (_) {});
 
   runApp(const ProviderScope(child: MyApp()));
 }
