@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RegisterInput extends StatelessWidget {
   final String label;
@@ -9,6 +10,9 @@ class RegisterInput extends StatelessWidget {
   final bool obscure;
   final String? Function(String?)? validator;
 
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
   const RegisterInput({
     super.key,
     required this.label,
@@ -18,6 +22,8 @@ class RegisterInput extends StatelessWidget {
     this.suffix,
     this.obscure = false,
     this.validator,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -31,6 +37,8 @@ class RegisterInput extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           validator: validator,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon),
