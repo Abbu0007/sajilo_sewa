@@ -4,12 +4,12 @@ import 'package:sajilo_sewa/core/services/hive/hive_service.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
 import 'package:sajilo_sewa/features/auth/data/models/user_hive_model.dart';
 
-import '../widgets/profile/profile_header.dart';
-import '../widgets/profile/profile_logout_button.dart';
-import '../widgets/profile/profile_section_title.dart';
-import '../widgets/profile/profile_stats_row.dart';
-import '../widgets/profile/profile_tile.dart';
-import '../widgets/profile/profile_tile_switch.dart';
+import '../widgets/profile_header.dart';
+import '../widgets/profile_logout_button.dart';
+import '../widgets/profile_section_title.dart';
+import '../widgets/profile_stats_row.dart';
+import '../widgets/profile_tile.dart';
+import '../widgets/profile_tile_switch.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

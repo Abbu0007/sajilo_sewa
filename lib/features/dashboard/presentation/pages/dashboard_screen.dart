@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/bookings_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/favourites_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/home_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/search_screen.dart';
+import 'package:sajilo_sewa/features/bookings/presentation/pages/bookings_screen.dart';
+import 'package:sajilo_sewa/features/favourites/presentation/pages/favourites_screen.dart';
+import 'package:sajilo_sewa/features/home/presentation/pages/home_screen.dart';
+import 'package:sajilo_sewa/features/profile/presentation/pages/profile_screen.dart';
+import 'package:sajilo_sewa/features/search/presentation/pages/search_screen.dart';
 
 class MainBottomNavigationBar extends StatefulWidget {
   const MainBottomNavigationBar({super.key});

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/home_app_bar.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/promo_banner.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/quick_categories.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/recent_bookings.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/search_bar.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/section_header.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/services_grid.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/home_app_bar.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/promo_banner.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/quick_categories.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/recent_bookings.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/search_bar.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/section_header.dart';
+import 'package:sajilo_sewa/features/home/presentation/widgets/services_grid.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});

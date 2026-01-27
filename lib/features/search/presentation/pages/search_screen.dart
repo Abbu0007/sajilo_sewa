@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/search/popular_categories.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/search/recent_searches.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/search/search_header.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/widgets/search/trending_services.dart';
+import 'package:sajilo_sewa/features/search/presentation/widgets/popular_categories.dart';
+import 'package:sajilo_sewa/features/search/presentation/widgets/recent_searches.dart';
+import 'package:sajilo_sewa/features/search/presentation/widgets/search_header.dart';
+import 'package:sajilo_sewa/features/search/presentation/widgets/trending_services.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
