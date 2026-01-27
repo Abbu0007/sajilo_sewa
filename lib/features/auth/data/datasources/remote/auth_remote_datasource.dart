@@ -7,6 +7,7 @@ class AuthRemoteDatasource {
   final Dio dio;
   AuthRemoteDatasource(this.dio);
 
+  /// Splits full name into firstName and lastName
   Map<String, String> _splitName(String fullName) {
     final parts = fullName
         .trim()
@@ -16,9 +17,14 @@ class AuthRemoteDatasource {
 
     if (parts.isEmpty) return {'firstName': '', 'lastName': ''};
     if (parts.length == 1) return {'firstName': parts[0], 'lastName': ''};
-    return {'firstName': parts.first, 'lastName': parts.sublist(1).join(' ')};
+
+    return {
+      'firstName': parts.first,
+      'lastName': parts.sublist(1).join(' '),
+    };
   }
 
+  /// REGISTER USER
   Future<AuthResponseModel> register({
     required String fullName,
     required String email,
@@ -30,17 +36,25 @@ class AuthRemoteDatasource {
     try {
       final name = _splitName(fullName);
 
+      /// Base payload (client-safe)
+      final Map<String, dynamic> data = {
+        'firstName': name['firstName'],
+        'lastName': name['lastName'],
+        'email': email.trim(),
+        'phone': phone.trim(),
+        'role': role,
+        'password': password,
+      };
+
+      
+      final String cleanedProfession = (profession ?? '').trim();
+      if (cleanedProfession.isNotEmpty) {
+        data['profession'] = cleanedProfession;
+      }
+
       final res = await dio.post(
         ApiEndpoints.register,
-        data: {
-          'firstName': name['firstName'],
-          'lastName': name['lastName'],
-          'email': email,
-          'phone': phone,
-          'role': role,
-          'profession': profession,
-          'password': password,
-        },
+        data: data,
       );
 
       return AuthResponseModel.fromJson(res.data as Map<String, dynamic>);
@@ -51,6 +65,7 @@ class AuthRemoteDatasource {
     }
   }
 
+  /// LOGIN USER
   Future<AuthResponseModel> login({
     required String email,
     required String password,
@@ -58,7 +73,10 @@ class AuthRemoteDatasource {
     try {
       final res = await dio.post(
         ApiEndpoints.login,
-        data: {'email': email, 'password': password},
+        data: {
+          'email': email.trim(),
+          'password': password,
+        },
       );
 
       return AuthResponseModel.fromJson(res.data as Map<String, dynamic>);
@@ -69,6 +87,7 @@ class AuthRemoteDatasource {
     }
   }
 
+  /// DIO ERROR MAPPER
   Failure _mapDioError(DioException e) {
     final status = e.response?.statusCode;
     final data = e.response?.data;
@@ -80,8 +99,9 @@ class AuthRemoteDatasource {
       msg = e.message!;
     }
 
-    if (status == 401) return AuthFailure(message: msg);
     if (status == 400) return ValidationFailure(message: msg);
+    if (status == 401) return AuthFailure(message: msg);
+
     return ServerFailure(message: msg);
   }
 }
