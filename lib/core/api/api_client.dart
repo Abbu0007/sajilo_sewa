@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-
+import 'package:sajilo_sewa/core/services/storage/token_service.dart';
 import 'api_endpoints.dart';
 
 class ApiClient {
@@ -22,6 +22,19 @@ class ApiClient {
     );
 
     d.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await TokenService.instance.getToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
+    );
+
+    // Retry
+    d.interceptors.add(
       RetryInterceptor(
         dio: d,
         retries: 3,
@@ -33,6 +46,7 @@ class ApiClient {
       ),
     );
 
+    // Logger
     d.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
