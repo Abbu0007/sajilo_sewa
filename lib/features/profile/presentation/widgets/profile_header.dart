@@ -4,6 +4,7 @@ class ProfileHeader extends StatelessWidget {
   final String name;
   final String phone;
   final String email;
+  final String? avatarUrl; // ✅ ADD
   final VoidCallback onSettingsTap;
 
   const ProfileHeader({
@@ -12,6 +13,7 @@ class ProfileHeader extends StatelessWidget {
     required this.phone,
     required this.email,
     required this.onSettingsTap,
+    this.avatarUrl,
   });
 
   @override
@@ -53,6 +55,7 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
+
           Row(
             children: [
               Stack(
@@ -61,19 +64,17 @@ class ProfileHeader extends StatelessWidget {
                     width: 58,
                     height: 58,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white.withOpacity(0.35),
                         width: 2,
                       ),
+                      color: Colors.white.withOpacity(0.25),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 30,
-                    ),
+                    child: _buildAvatar(),
                   ),
+
+                  // verified badge (unchanged)
                   Positioned(
                     right: 0,
                     bottom: 0,
@@ -93,7 +94,9 @@ class ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,6 +134,46 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Avatar logic (network → fallback icon)
+  Widget _buildAvatar() {
+    if (avatarUrl == null || avatarUrl!.isEmpty) {
+      return const Icon(
+        Icons.person,
+        color: Colors.white,
+        size: 30,
+      );
+    }
+
+    return ClipOval(
+      child: Image.network(
+        avatarUrl!,
+        width: 58,
+        height: 58,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return const Icon(
+            Icons.person,
+            color: Colors.white,
+            size: 30,
+          );
+        },
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return const Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
