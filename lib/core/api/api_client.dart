@@ -33,7 +33,6 @@ class ApiClient {
       ),
     );
 
-    // Retry
     d.interceptors.add(
       RetryInterceptor(
         dio: d,
@@ -46,7 +45,6 @@ class ApiClient {
       ),
     );
 
-    // Logger
     d.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
@@ -55,6 +53,15 @@ class ApiClient {
         responseBody: true,
         error: true,
         compact: true,
+      ),
+    );
+
+    d.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseBody: true,
+        error: true,
       ),
     );
 
