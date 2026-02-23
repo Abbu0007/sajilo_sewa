@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/bookings/presentation/pages/bookings_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/favourites/presentation/pages/favourites_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/home/presentation/pages/home_screen.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/bookings_screen.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/favourites_screen.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/home_screen.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/pages/profile_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/search/presentation/pages/search_screen.dart';
+
 
 class MainBottomNavigationBar extends StatefulWidget {
   const MainBottomNavigationBar({super.key});
@@ -18,7 +18,6 @@ class _MainBottomNavigationBarState extends State<MainBottomNavigationBar> {
 
   final List<Widget> lstBottomScreen = const [
     HomeScreen(),
-    SearchScreen(),
     BookingsScreen(),
     FavouritesScreen(),
     ProfileScreen(),
@@ -28,7 +27,6 @@ class _MainBottomNavigationBarState extends State<MainBottomNavigationBar> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: lstBottomScreen[_selectedIndex],
-
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const [
@@ -36,11 +34,6 @@ class _MainBottomNavigationBarState extends State<MainBottomNavigationBar> {
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search_outlined),
-            activeIcon: Icon(Icons.search),
-            label: 'Search',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),

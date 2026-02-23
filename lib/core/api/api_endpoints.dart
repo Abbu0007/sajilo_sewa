@@ -4,13 +4,8 @@ import 'package:flutter/foundation.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
-  /// Set true when testing on real phone (same Wi-Fi as your PC)
   static const bool isPhysicalDevice = false;
-
-  /// Replace with YOUR PC IP when on real phone
   static const String _ipAddress = '192.168.1.10';
-
-  /// Your backend port (from Postman)
   static const int _port = 5000;
 
   static String get _host {
@@ -21,11 +16,7 @@ class ApiEndpoints {
   }
 
   static String get serverUrl => 'http://$_host:$_port';
-
-  /// You are using /api/... routes, so baseUrl is serverUrl
   static String get baseUrl => serverUrl;
-
-  /// Uploads/media base (same server)
   static String get mediaServerUrl => serverUrl;
 
   // --- Auth ---
@@ -37,9 +28,26 @@ class ApiEndpoints {
   static const String updateMe = '/api/users/me';
   static const String uploadAvatar = '/api/users/me/avatar';
 
+  // --- Services ---
+  static const String services = "/api/services";
+
+  // --- Providers (Client/Public) ---
+  static String providersByService(String slug) => "/api/providers/by-service/$slug";
+  static String topRatedProviders({int limit = 8}) => "/api/providers/top-rated?limit=$limit";
+
+  // --- Favourites (Client) ---
+  static const String favourites = "/api/favourites";
+  static String favouriteToggle(String providerId) => "/api/favourites/$providerId";
+
+  // --- Bookings (Client) ---
+  static const String createBooking = "/api/bookings";
+  static String myBookings({String status = "all"}) => "/api/bookings/mine?status=$status";
+
+  // --- Notifications  ---
+  static const String notifications = "/api/notifications";
+  static String notificationRead(String id) => "/api/notifications/$id/read";
+
   // Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
-
-  static const services = "/api/services";
 }
