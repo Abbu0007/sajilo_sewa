@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../repositories/auth_repository.dart';
+import 'package:sajilo_sewa/core/error/failures.dart';
+import 'package:sajilo_sewa/features/auth/domain/repositories/auth_repository.dart';
 
 class SignUpUseCase {
   final IAuthRepository repository;
@@ -14,6 +14,7 @@ class SignUpUseCase {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) {
     return repository.signUp(
       fullName: fullName,
@@ -22,6 +23,7 @@ class SignUpUseCase {
       password: password,
       role: role,
       profession: profession,
+      serviceSlug: serviceSlug,
     );
   }
 }

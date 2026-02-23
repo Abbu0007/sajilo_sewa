@@ -9,6 +9,7 @@ abstract interface class IAuthRepository {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   });
 
   Future<Either<Failure, String>> login({

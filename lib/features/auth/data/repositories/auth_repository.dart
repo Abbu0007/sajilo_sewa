@@ -14,7 +14,7 @@ class AuthRepository implements IAuthRepository {
   final IAuthDataSource _authDataSource;
 
   AuthRepository({required IAuthDataSource authDatasource})
-    : _authDataSource = authDatasource;
+      : _authDataSource = authDatasource;
 
   @override
   Future<Either<Failure, Unit>> signUp({
@@ -24,6 +24,7 @@ class AuthRepository implements IAuthRepository {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) async {
     try {
       await _authDataSource.signUp(
@@ -33,6 +34,7 @@ class AuthRepository implements IAuthRepository {
         password: password,
         role: role,
         profession: profession,
+        serviceSlug: serviceSlug, // ✅ FIXED
       );
       return right(unit);
     } catch (e) {
