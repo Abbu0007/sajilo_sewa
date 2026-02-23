@@ -11,6 +11,7 @@ class AuthLocalDatasource {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) async {
     final res = await _hive.signUp(
       fullName: fullName,
@@ -19,6 +20,7 @@ class AuthLocalDatasource {
       password: password,
       role: role,
       profession: profession,
+      serviceSlug: serviceSlug,
     );
 
     res.fold((f) => throw f, (_) => null);

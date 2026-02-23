@@ -7,7 +7,6 @@ class AuthRemoteDatasource {
   final Dio dio;
   AuthRemoteDatasource(this.dio);
 
-  /// Splits full name into firstName and lastName
   Map<String, String> _splitName(String fullName) {
     final parts = fullName
         .trim()
@@ -24,7 +23,6 @@ class AuthRemoteDatasource {
     };
   }
 
-  /// REGISTER USER
   Future<AuthResponseModel> register({
     required String fullName,
     required String email,
@@ -32,11 +30,11 @@ class AuthRemoteDatasource {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) async {
     try {
       final name = _splitName(fullName);
 
-      /// Base payload (client-safe)
       final Map<String, dynamic> data = {
         'firstName': name['firstName'],
         'lastName': name['lastName'],
@@ -47,25 +45,31 @@ class AuthRemoteDatasource {
       };
 
       
-      final String cleanedProfession = (profession ?? '').trim();
-      if (cleanedProfession.isNotEmpty) {
-        data['profession'] = cleanedProfession;
+      if (role == "provider") {
+        final p = (profession ?? '').trim();
+        final s = (serviceSlug ?? '').trim();
+
+        if (p.isEmpty || s.isEmpty) {
+          throw ValidationFailure(
+            message: "Profession and service are required for service providers",
+          );
+        }
+
+        data['profession'] = p;
+        data['serviceSlug'] = s;
       }
 
-      final res = await dio.post(
-        ApiEndpoints.register,
-        data: data,
-      );
-
+      final res = await dio.post(ApiEndpoints.register, data: data);
       return AuthResponseModel.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioError(e);
+    } on Failure {
+      rethrow;
     } catch (e) {
       throw ServerFailure(message: 'Register failed: $e');
     }
   }
 
-  /// LOGIN USER
   Future<AuthResponseModel> login({
     required String email,
     required String password,
@@ -73,12 +77,8 @@ class AuthRemoteDatasource {
     try {
       final res = await dio.post(
         ApiEndpoints.login,
-        data: {
-          'email': email.trim(),
-          'password': password,
-        },
+        data: {'email': email.trim(), 'password': password},
       );
-
       return AuthResponseModel.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioError(e);
@@ -87,7 +87,6 @@ class AuthRemoteDatasource {
     }
   }
 
-  /// DIO ERROR MAPPER
   Failure _mapDioError(DioException e) {
     final status = e.response?.statusCode;
     final data = e.response?.data;
@@ -95,12 +94,12 @@ class AuthRemoteDatasource {
     String msg = 'Network error';
     if (data is Map<String, dynamic>) {
       msg = (data['message'] ?? data['error'] ?? msg).toString();
-    } else if (e.message != null) {
-      msg = e.message!;
     }
 
     if (status == 400) return ValidationFailure(message: msg);
     if (status == 401) return AuthFailure(message: msg);
+    if (status == 403) return AuthFailure(message: msg);
+    if (status == 404) return ServerFailure(message: msg);
 
     return ServerFailure(message: msg);
   }

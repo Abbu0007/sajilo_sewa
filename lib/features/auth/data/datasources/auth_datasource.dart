@@ -13,6 +13,9 @@ abstract interface class IAuthDataSource {
     required String password,
     required String role,
     String? profession,
+
+    // ✅ NEW
+    String? serviceSlug,
   });
 
   Future<String> login({required String email, required String password});
@@ -20,7 +23,6 @@ abstract interface class IAuthDataSource {
   Future<void> logout();
 }
 
-/// Controls Remote + Local
 class AuthDataSource implements IAuthDataSource {
   final NetworkInfo networkInfo;
   final AuthRemoteDatasource remote;
@@ -42,6 +44,7 @@ class AuthDataSource implements IAuthDataSource {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) async {
     try {
       final online = await networkInfo.isConnected;
@@ -54,12 +57,14 @@ class AuthDataSource implements IAuthDataSource {
           password: password,
           role: role,
           profession: profession,
+          serviceSlug: serviceSlug,
         );
 
         await UserSessionService.instance.saveSession(
           userKey: data.user.email.trim().toLowerCase(),
           role: data.user.role,
           token: data.token,
+          serviceSlug: serviceSlug,
         );
 
         await hive.cacheUserFromApi(
@@ -70,6 +75,7 @@ class AuthDataSource implements IAuthDataSource {
           role: data.user.role,
           profession: data.user.profession,
           token: data.token,
+          serviceSlug: serviceSlug,
         );
 
         return;
@@ -82,6 +88,7 @@ class AuthDataSource implements IAuthDataSource {
         password: password,
         role: role,
         profession: profession,
+        serviceSlug: serviceSlug,
       );
     } catch (e) {
       if (e is Failure) throw e;
@@ -90,16 +97,14 @@ class AuthDataSource implements IAuthDataSource {
   }
 
   @override
-  Future<String> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<String> login({required String email, required String password}) async {
     try {
       final online = await networkInfo.isConnected;
 
       if (online) {
         final data = await remote.login(email: email, password: password);
 
+        // ✅ Keep as-is; if your API model later contains serviceSlug, save it here too.
         await UserSessionService.instance.saveSession(
           userKey: data.user.email.trim().toLowerCase(),
           role: data.user.role,
@@ -118,6 +123,7 @@ class AuthDataSource implements IAuthDataSource {
 
         return data.user.role;
       }
+
       return await local.login(email: email, password: password);
     } catch (e) {
       if (e is Failure) throw e;
