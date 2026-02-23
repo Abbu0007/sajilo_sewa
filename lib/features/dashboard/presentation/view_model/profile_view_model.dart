@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/providers/profile_providers.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/view_models/profile_state.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/providers/profile_providers.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_state.dart';
 
 final profileViewModelProvider =
     StateNotifierProvider<ProfileViewModel, ProfileState>((ref) {

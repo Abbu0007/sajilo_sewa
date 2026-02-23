@@ -6,7 +6,7 @@ import 'package:sajilo_sewa/features/auth/presentation/pages/login_screen.dart';
 import 'package:sajilo_sewa/features/auth/presentation/pages/register_screen.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/pages/dashboard_screen.dart'; 
 import 'package:sajilo_sewa/features/onboarding/presentation/pages/onboarding_screen.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/pages/edit_profile_screen.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/edit_profile_screen.dart';
 import 'package:sajilo_sewa/features/splash/presentation/pages/splash_screen.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/presentation/pages/provider_dashboard_screen.dart';
 

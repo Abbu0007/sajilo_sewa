@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/utils/avatar_picker.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/view_models/profile_view_model.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/utils/avatar_picker.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_view_model.dart';
 
 
 class EditProfileScreen extends ConsumerStatefulWidget {

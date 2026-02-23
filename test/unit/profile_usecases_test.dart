@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:sajilo_sewa/core/error/failures.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/entities/profile_entity.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/repositories/profile_repository.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/usecases/get_profile_usecase.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/usecases/upload_avatar_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_profile_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/upload_avatar_usecase.dart';
 
 class MockProfileRepository extends Mock implements IProfileRepository {}
 

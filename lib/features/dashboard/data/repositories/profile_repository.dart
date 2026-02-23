@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/datasources/profile_remote_datasource.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/entities/profile_entity.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/repositories/profile_repository.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/providers/profile_providers.dart';
+import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/profile_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/providers/profile_providers.dart';
 
 final profileRepositoryProvider = Provider<IProfileRepository>((ref) {
   final ds = ref.read(profileRemoteDataSourceProvider);

@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:sajilo_sewa/core/api/api_endpoints.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/models/profile_api_model.dart';
+import 'package:sajilo_sewa/features/dashboard/data/models/profile_api_model.dart';
 
 abstract class IProfileRemoteDataSource {
   Future<ProfileApiModel> getMe();

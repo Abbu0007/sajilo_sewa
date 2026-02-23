@@ -1,4 +1,4 @@
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/entities/profile_entity.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
 
 class ProfileState {
   final bool isLoading;

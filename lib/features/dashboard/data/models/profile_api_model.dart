@@ -1,5 +1,5 @@
 import 'package:sajilo_sewa/core/utils/url_utils.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/entities/profile_entity.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
 
 class ProfileApiModel {
   final String id;

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
-import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/view_models/profile_view_model.dart';
-import '../widgets/profile_header.dart';
-import '../widgets/profile_logout_button.dart';
-import '../widgets/profile_section_title.dart';
-import '../widgets/profile_stats_row.dart';
-import '../widgets/profile_tile.dart';
-import '../widgets/profile_tile_switch.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_view_model.dart';
+import '../widgets/profile/profile_header.dart';
+import '../widgets/profile/profile_logout_button.dart';
+import '../widgets/profile/profile_section_title.dart';
+import '../widgets/profile/profile_stats_row.dart';
+import '../widgets/profile/profile_tile.dart';
+import '../widgets/profile/profile_tile_switch.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
