@@ -1,46 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/widgets/my_textformfield.dart';
 
 class ProfessionField extends StatelessWidget {
   final TextEditingController controller;
-  final VoidCallback onOpenPicker;
+
+  /// ✅ used in RegisterForm as: onTapPick: () { ... }
+  final VoidCallback? onTapPick;
 
   const ProfessionField({
     super.key,
     required this.controller,
-    required this.onOpenPicker,
+    this.onTapPick,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Profession",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          onTap: onOpenPicker,
-          decoration: InputDecoration(
-            hintText: "Carpenter / Plumber ...",
-            prefixIcon: const Icon(Icons.work_outline),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.arrow_drop_down),
-              onPressed: onOpenPicker,
+    return MyTextFormField(
+      label: "Profession",
+      controller: controller,
+      hint: "e.g. Plumber, Electrician",
+      icon: Icons.work_outline,
+      // keep manual entry allowed
+      validator: (v) {
+        if (v == null || v.trim().isEmpty) return "Profession is required";
+        return null;
+      },
+      suffix: onTapPick == null
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down),
+              onPressed: onTapPick,
             ),
-            filled: true,
-            fillColor: const Color(0xFFFAFAFA),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

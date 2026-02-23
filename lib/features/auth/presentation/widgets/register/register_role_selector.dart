@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'register_form.dart';
+import 'register_role.dart';
 
 class RegisterRoleSelector extends StatelessWidget {
   final RegisterRole role;
@@ -29,7 +29,9 @@ class RegisterRoleSelector extends StatelessWidget {
                 value: RegisterRole.client,
                 groupValue: role,
                 title: const Text("Client"),
-                onChanged: (v) => onChanged(v!),
+                onChanged: (v) {
+                  if (v != null) onChanged(v);
+                },
               ),
             ),
             Expanded(
@@ -37,7 +39,9 @@ class RegisterRoleSelector extends StatelessWidget {
                 value: RegisterRole.provider,
                 groupValue: role,
                 title: const Text("Provider"),
-                onChanged: (v) => onChanged(v!),
+                onChanged: (v) {
+                  if (v != null) onChanged(v);
+                },
               ),
             ),
           ],
