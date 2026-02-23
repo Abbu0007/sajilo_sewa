@@ -5,7 +5,7 @@ import 'package:sajilo_sewa/core/utils/url_utils.dart';
 void main() {
   group('UrlUtils.normalizeMediaUrl', () {
     test('returns empty string when url is null', () {
-      expect(UrlUtils.normalizeMediaUrl(null), 'adsdas');
+      expect(UrlUtils.normalizeMediaUrl(null), '');
     });
 
     test('returns empty string when url is empty', () {

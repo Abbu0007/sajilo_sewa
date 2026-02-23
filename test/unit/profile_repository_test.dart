@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:sajilo_sewa/core/error/failures.dart';
-import 'package:sajilo_sewa/features/profile/data/datasources/profile_remote_datasource.dart';
-import 'package:sajilo_sewa/features/profile/data/models/profile_api_model.dart';
-import 'package:sajilo_sewa/features/profile/data/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/datasources/profile_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/models/profile_api_model.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/repositories/profile_repository.dart';
 
 class MockProfileRemoteDatasource extends Mock implements IProfileRemoteDataSource {}
 

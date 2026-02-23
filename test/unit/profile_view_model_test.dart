@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:sajilo_sewa/core/error/failures.dart';
-import 'package:sajilo_sewa/features/profile/domain/entities/profile_entity.dart';
-import 'package:sajilo_sewa/features/profile/domain/usecases/get_profile_usecase.dart';
-import 'package:sajilo_sewa/features/profile/presentation/providers/profile_providers.dart';
-import 'package:sajilo_sewa/features/profile/presentation/view_models/profile_view_model.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/entities/profile_entity.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/domain/usecases/get_profile_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/providers/profile_providers.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/presentation/view_models/profile_view_model.dart';
 
 class MockGetProfileUseCase extends Mock implements GetProfileUseCase {}
 

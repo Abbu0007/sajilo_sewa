@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sajilo_sewa/features/profile/data/models/profile_api_model.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/pages/profile/data/models/profile_api_model.dart';
 
 void main() {
   test('ProfileApiModel parses JSON and maps to entity', () {
