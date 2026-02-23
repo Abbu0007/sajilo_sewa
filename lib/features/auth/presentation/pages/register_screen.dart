@@ -9,8 +9,17 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(children: [RegisterHeader(), RegisterForm()]),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: 24),
+          child: Column(
+            children: [
+              RegisterHeader(),
+              SizedBox(height: 8),
+              RegisterForm(),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -40,14 +40,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     state.when(
       data: (role) {
         if (role == null) return;
-
-        if (role == 'admin') {
-          Navigator.pushReplacementNamed(context, AppRoutes.main);
-        } else if (role == 'provider') {
-          Navigator.pushReplacementNamed(context, AppRoutes.main);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRoutes.main);
-        }
+        final normalizedRole = role.trim().toLowerCase();
+        if (normalizedRole == 'admin') {
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.adminMain, (r) => false);
+          } else if (normalizedRole == 'provider') {
+            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.providerMain, (r) => false);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(context, AppRoutes.main, (r) => false);
+              }
       },
       loading: () {},
       error: (e, _) => _snack(e.toString()),
