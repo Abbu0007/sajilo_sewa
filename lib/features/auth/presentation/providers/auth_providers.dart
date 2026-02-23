@@ -67,7 +67,7 @@ class AuthController extends StateNotifier<AsyncValue<String?>> {
   final LoginUseCase loginUseCase;
 
   AuthController(this.signUpUseCase, this.loginUseCase)
-    : super(const AsyncValue.data(null));
+      : super(const AsyncValue.data(null));
 
   Future<void> signUp({
     required String fullName,
@@ -76,6 +76,7 @@ class AuthController extends StateNotifier<AsyncValue<String?>> {
     required String password,
     required String role,
     String? profession,
+    String? serviceSlug,
   }) async {
     state = const AsyncValue.loading();
 
@@ -86,6 +87,7 @@ class AuthController extends StateNotifier<AsyncValue<String?>> {
       password: password,
       role: role,
       profession: profession,
+      serviceSlug: serviceSlug,
     );
 
     state = result.fold(
