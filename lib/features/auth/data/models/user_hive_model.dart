@@ -28,6 +28,9 @@ class UserHiveModel {
   @HiveField(7)
   final DateTime createdAt;
 
+  @HiveField(8)
+  final String? serviceSlug;
+
   UserHiveModel({
     required this.id,
     required this.fullName,
@@ -37,5 +40,6 @@ class UserHiveModel {
     this.profession,
     this.phone,
     required this.createdAt,
+    this.serviceSlug,
   });
 }

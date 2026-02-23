@@ -6,6 +6,7 @@ class AuthUserEntity {
   final String phone;
   final String role;
   final String? profession;
+  final String? serviceSlug;
 
   const AuthUserEntity({
     required this.id,
@@ -15,6 +16,7 @@ class AuthUserEntity {
     required this.phone,
     required this.role,
     this.profession,
+    this.serviceSlug
   });
 
   String get fullName => '$firstName $lastName'.trim();

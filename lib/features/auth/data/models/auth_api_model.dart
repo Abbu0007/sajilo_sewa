@@ -8,6 +8,7 @@ class AuthApiModel {
   final String phone;
   final String role;
   final String? profession;
+  final String? serviceSlug;
 
   AuthApiModel({
     required this.id,
@@ -17,6 +18,7 @@ class AuthApiModel {
     required this.phone,
     required this.role,
     this.profession,
+    this.serviceSlug,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -30,6 +32,7 @@ class AuthApiModel {
       phone: (json['phone'] ?? '').toString(),
       role: (json['role'] ?? '').toString(),
       profession: json['profession']?.toString(),
+      serviceSlug: json['serviceSlug']?.toString(),
     );
   }
 
@@ -41,28 +44,31 @@ class AuthApiModel {
       'phone': phone,
       'role': role,
       'profession': profession,
+      'serviceSlug': serviceSlug,
     };
   }
 
   AuthUserEntity toEntity() => AuthUserEntity(
-    id: id,
-    firstName: firstName,
-    lastName: lastName,
-    email: email,
-    phone: phone,
-    role: role,
-    profession: profession,
-  );
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        role: role,
+        profession: profession,
+        serviceSlug: serviceSlug,
+      );
 
   factory AuthApiModel.fromEntity(AuthUserEntity e) => AuthApiModel(
-    id: e.id,
-    firstName: e.firstName,
-    lastName: e.lastName,
-    email: e.email,
-    phone: e.phone,
-    role: e.role,
-    profession: e.profession,
-  );
+        id: e.id,
+        firstName: e.firstName,
+        lastName: e.lastName,
+        email: e.email,
+        phone: e.phone,
+        role: e.role,
+        profession: e.profession,
+        serviceSlug: e.serviceSlug,
+      );
 
   static List<AuthUserEntity> toEntityList(List<AuthApiModel> list) =>
       list.map((e) => e.toEntity()).toList();
@@ -72,7 +78,7 @@ class AuthApiModel {
 }
 
 class AuthResponseModel {
-  final String token; 
+  final String token;
   final AuthApiModel user;
 
   AuthResponseModel({required this.token, required this.user});
@@ -84,4 +90,3 @@ class AuthResponseModel {
     );
   }
 }
-
