@@ -18,7 +18,25 @@ class _SplashScreenState extends State<SplashScreen> {
       final session = UserSessionService.instance;
 
       if (session.isLoggedIn()) {
-        Navigator.pushReplacementNamed(context, AppRoutes.main);
+        final role = session.getRoleNormalized();
+
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.adminMain,
+          );
+        } else if (role == 'provider') {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.providerMain,
+          );
+        } else {
+          // default client
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.main,
+          );
+        }
         return;
       }
 
