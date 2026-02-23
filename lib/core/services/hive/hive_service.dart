@@ -64,6 +64,10 @@ class HiveService {
     required String phone,
     required String role,
     String? profession,
+
+    // ✅ NEW
+    String? serviceSlug,
+
     required String token,
   }) async {
     try {
@@ -87,6 +91,9 @@ class HiveService {
         userKey: normalizedEmail,
         role: role,
         token: token,
+
+        // ✅ NEW
+        serviceSlug: serviceSlug,
       );
 
       return right(unit);
@@ -102,6 +109,9 @@ class HiveService {
     required String password,
     required String role, // client | provider
     String? profession,
+
+    // ✅ NEW
+    String? serviceSlug,
   }) async {
     try {
       final usersBox = Hive.box<UserHiveModel>(HiveTableConstants.usersBox);
@@ -122,6 +132,13 @@ class HiveService {
         if (p.isEmpty) {
           return left(ValidationFailure(message: 'Profession is required.'));
         }
+
+        // ✅ NEW: serviceSlug required for provider
+        final s = serviceSlug?.trim() ?? '';
+        if (s.isEmpty) {
+          return left(ValidationFailure(message: 'Service is required.'));
+        }
+
         await addProfession(p);
       }
 
@@ -143,6 +160,9 @@ class HiveService {
         userKey: normalizedEmail,
         role: role,
         token: '',
+
+        // ✅ NEW
+        serviceSlug: role == 'provider' ? serviceSlug?.trim() : null,
       );
 
       return right(unit);
