@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/daashboard_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_service_usecase.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/notifications_sheet.dart';
+
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
 import '../../domain/usecases/get_top_rated_providers_usecase.dart';
 import '../../domain/usecases/mark_notification_read_usecase.dart';
+import '../../domain/usecases/create_rating_usecase.dart'; // ✅ NEW
+
 import '../view_model/dashboard_home_controller.dart';
 import '../view_model/home_notifications_controller.dart';
+
 import '../widgets/home/home_header.dart';
 import '../widgets/home/home_promo_card.dart';
 import '../widgets/home/home_search_box.dart';
@@ -27,6 +31,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late final DashboardRepositoryImpl repo; // ✅ keep single repo instance
   late final DashboardHomeController homeController;
   late final HomeNotificationsController notifController;
 
@@ -34,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    final repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
+    repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
 
     homeController = DashboardHomeController(
       getServices: GetServicesUseCase(repo),
@@ -44,11 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
     notifController = HomeNotificationsController(
       getNotifications: GetNotificationsUseCase(repo),
       markRead: MarkNotificationReadUseCase(repo),
+      createRating: CreateRatingUseCase(repo), // ✅ NEW
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await homeController.load();
-      // Optional: preload notifications count so badge is correct
+      // preload notifications so badge is correct
       await notifController.load();
     });
   }
@@ -63,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openNotifications() async {
     // refresh when opened
     await notifController.load();
-
     if (!mounted) return;
 
     await showModalBottomSheet(
@@ -78,6 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: HomeNotificationsSheet(controller: notifController),
       ),
     );
+
+    // ✅ After closing sheet, refresh home so Top Rated updates after ratings
+    if (!mounted) return;
+    await homeController.load();
+    await notifController.load(); // keeps badge accurate
   }
 
   @override
@@ -166,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: "Top Rated Providers",
                     actionText: "View All",
                     onAction: () {
-                      // later: open provider list
+                    
                     },
                   ),
                   const SizedBox(height: 12),

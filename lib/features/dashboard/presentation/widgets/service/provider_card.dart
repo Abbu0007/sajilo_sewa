@@ -31,6 +31,9 @@ class ProviderCard extends StatelessWidget {
 
     final scheme = Theme.of(context).colorScheme;
 
+    final rating = provider.avgRating;
+    final ratingCount = provider.ratingCount;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -50,7 +53,10 @@ class ProviderCard extends StatelessWidget {
                     ? const Icon(Icons.person, color: Colors.grey)
                     : Text(
                         initials,
-                        style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black87),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
                       ),
               ),
               const SizedBox(width: 12),
@@ -63,6 +69,23 @@ class ProviderCard extends StatelessWidget {
                     Text(
                       provider.profession ?? "Professional",
                       style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                    ),
+
+                    // ✅ NEW: Rating row
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _StarRating(rating: rating),
+                        const SizedBox(width: 6),
+                        Text(
+                          ratingCount > 0 ? "${rating.toStringAsFixed(1)} ($ratingCount)" : "No ratings yet",
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -112,6 +135,29 @@ class ProviderCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StarRating extends StatelessWidget {
+  final double rating;
+
+  const _StarRating({required this.rating});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(5, (index) {
+        final starNumber = index + 1;
+
+        if (rating >= starNumber) {
+          return const Icon(Icons.star, size: 16, color: Colors.amber);
+        } else if (rating >= starNumber - 0.5) {
+          return const Icon(Icons.star_half, size: 16, color: Colors.amber);
+        } else {
+          return const Icon(Icons.star_border, size: 16, color: Colors.amber);
+        }
+      }),
     );
   }
 }

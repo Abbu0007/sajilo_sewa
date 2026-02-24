@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../view_model/home_notifications_controller.dart';
+import '../ratings/rating_sheet.dart';
 
 class HomeNotificationsSheet extends StatelessWidget {
   final HomeNotificationsController controller;
@@ -60,7 +61,10 @@ class HomeNotificationsSheet extends StatelessWidget {
                         Expanded(
                           child: Text(
                             controller.error!,
-                            style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w700),
+                            style: const TextStyle(
+                              color: Color(0xFF991B1B),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                         TextButton(
@@ -86,8 +90,41 @@ class HomeNotificationsSheet extends StatelessWidget {
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         final n = controller.items[i];
+
+                        final isRatingRequest = (n.type ?? "") == "rating_request";
+                        final bookingId = (n.bookingId ?? "").trim();
+
                         return InkWell(
                           onTap: () async {
+                            if (isRatingRequest && bookingId.isNotEmpty) {
+                              await showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+                                ),
+                                builder: (_) => Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                  ),
+                                  child: RatingSheet(
+                                    title: n.title,
+                                    subtitle: n.message,
+                                    onSubmit: (stars, comment) async {
+                                      await controller.submitRatingFromNotification(
+                                        notificationId: n.id,
+                                        bookingId: bookingId,
+                                        stars: stars,
+                                        comment: comment,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            // normal: mark read
                             if (!n.isRead) {
                               await controller.markAsReadAndRefresh(n.id);
                             }
@@ -103,9 +140,17 @@ class HomeNotificationsSheet extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  n.title,
-                                  style: const TextStyle(fontWeight: FontWeight.w900),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        n.title,
+                                        style: const TextStyle(fontWeight: FontWeight.w900),
+                                      ),
+                                    ),
+                                    if (isRatingRequest)
+                                      const Icon(Icons.star, color: Colors.amber, size: 18),
+                                  ],
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
