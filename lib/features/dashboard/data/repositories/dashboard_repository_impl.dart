@@ -1,4 +1,4 @@
-import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/daashboard_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/entities/notification_entity.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/provider_entity.dart';
@@ -38,6 +38,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               profession: m.profession,
               serviceSlug: m.serviceSlug,
               avatarUrl: m.avatarUrl,
+              avgRating: m.avgRating,
+              ratingCount: m.ratingCount,
             ))
         .toList();
   }
@@ -55,6 +57,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               profession: m.profession,
               serviceSlug: m.serviceSlug,
               avatarUrl: m.avatarUrl,
+              avgRating: m.avgRating,
+              ratingCount: m.ratingCount,
             ))
         .toList();
   }
@@ -72,6 +76,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               profession: m.profession,
               serviceSlug: m.serviceSlug,
               avatarUrl: m.avatarUrl,
+              avgRating: m.avgRating,
+              ratingCount: m.ratingCount,
             ))
         .toList();
   }
@@ -176,8 +182,24 @@ class DashboardRepositoryImpl implements IDashboardRepository {
             message: m.message ?? "",
             createdAt: m.createdAt,
             isRead: m.isRead,
+            type: m.type,
+            bookingId: m.bookingId,
+            meta: m.meta,
           ))
       .toList();
+  }
+
+  @override
+  Future<void> createRating({
+  required String bookingId,
+  required int stars,
+  String? comment,
+  }) {
+  return remote.createRating(
+    bookingId: bookingId,
+    stars: stars,
+    comment: comment,
+  );
   }
 
   @override

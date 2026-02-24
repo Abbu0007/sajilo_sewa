@@ -15,6 +15,12 @@ abstract class IDashboardRepository {
   Future<List<NotificationEntity>> getNotifications();
   Future<void> markNotificationRead(String id);
 
+  Future<void> createRating({
+  required String bookingId,
+  required int stars,
+  String? comment,
+  });
+
   Future<List<BookingEntity>> getMyBookings({String status = "all"});
   Future<BookingEntity> createBooking({
     required String providerId,
