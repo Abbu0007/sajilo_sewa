@@ -46,8 +46,25 @@ class ApiEndpoints {
   // --- Notifications  ---
   static const String notifications = "/api/notifications";
   static String notificationRead(String id) => "/api/notifications/$id/read";
+  static const String ratings = "/api/ratings";
 
   // Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
+
+  //Provider
+  // --- Provider Bookings (Provider) ---
+static String providerBookingsMine({String status = "all"}) =>
+    "/api/provider/bookings/mine?status=$status";
+
+static String providerBookingAccept(String bookingId) =>
+    "/api/provider/bookings/$bookingId/accept";
+
+static String providerBookingReject(String bookingId) =>
+    "/api/provider/bookings/$bookingId/reject";
+
+static String providerBookingUpdateStatus(String bookingId) =>
+    "/api/provider/bookings/$bookingId/status";
+
+  static const String providerMeProfile = "/api/providers/me/profile";
 }
