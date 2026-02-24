@@ -222,6 +222,7 @@ class _LogoutButton extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _HeroTab extends StatelessWidget {
   final String label;
   final bool active;
