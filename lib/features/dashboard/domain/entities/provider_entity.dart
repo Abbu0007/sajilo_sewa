@@ -7,6 +7,8 @@ class ProviderEntity {
   final String? profession;
   final String? serviceSlug;
   final String? avatarUrl;
+  final double avgRating;
+  final int ratingCount;
 
   const ProviderEntity({
     required this.id,
@@ -17,6 +19,8 @@ class ProviderEntity {
     this.profession,
     this.serviceSlug,
     this.avatarUrl,
+    this.avgRating = 0,
+    this.ratingCount = 0,
   });
 
   String get fullName => ('$firstName $lastName').trim();
