@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class ProfileStatsRow extends StatelessWidget {
-  final String bookings;
-  final String favourites;
+  final String completedBookings;
   final String rating;
+  final String totalReviews;
 
   const ProfileStatsRow({
     super.key,
-    required this.bookings,
-    required this.favourites,
+    required this.completedBookings,
     required this.rating,
+    required this.totalReviews,
   });
 
   @override
@@ -18,19 +18,10 @@ class ProfileStatsRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            value: bookings,
-            label: "Bookings",
+            value: completedBookings,
+            label: "Completed Bookings",
             valueColor: const Color(0xFF3B82F6),
             bg: const Color(0xFFEFF6FF),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatCard(
-            value: favourites,
-            label: "Favourites",
-            valueColor: const Color(0xFF22C55E),
-            bg: const Color(0xFFEAFBF2),
           ),
         ),
         const SizedBox(width: 10),
@@ -40,6 +31,15 @@ class ProfileStatsRow extends StatelessWidget {
             label: "Rating",
             valueColor: const Color(0xFFF59E0B),
             bg: const Color(0xFFFFF7ED),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            value: totalReviews,
+            label: "Total Reviews",
+            valueColor: const Color(0xFF6366F1),
+            bg: const Color(0xFFEEF2FF),
           ),
         ),
       ],
@@ -77,6 +77,7 @@ class _StatCard extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
@@ -86,6 +87,7 @@ class _StatCard extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/utils/media_url.dart';
 import '../../../domain/entities/provider_entity.dart';
 
 class ProviderDetailsSheet extends StatelessWidget {
@@ -18,17 +19,12 @@ class ProviderDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = provider.fullName.trim();
-    final initials = name.isEmpty
-        ? "U"
-        : name
-            .split(RegExp(r"\s+"))
-            .take(2)
-            .map((e) => e.isNotEmpty ? e[0] : "")
-            .join()
-            .toUpperCase();
+    final initials = _initials(name);
 
-    final phone = (provider.phone ?? "").trim();
-    final email = (provider.email ?? "").trim();
+    final phone = provider.phone.trim();
+    final email = provider.email.trim();
+
+    final avatar = resolveMediaUrl(provider.avatarUrl);
 
     return SafeArea(
       child: Padding(
@@ -55,6 +51,13 @@ class ProviderDetailsSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
+                  onPressed: onToggleFavourite,
+                  icon: Icon(
+                    isFavourite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    color: isFavourite ? Colors.red : Colors.black54,
+                  ),
+                ),
+                IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
                 ),
@@ -63,12 +66,17 @@ class ProviderDetailsSheet extends StatelessWidget {
 
             const SizedBox(height: 6),
 
+            // ✅ AVATAR (NetworkImage + fallback)
             CircleAvatar(
               radius: 34,
               backgroundColor: const Color(0xFFF3F4F6),
-              child: (provider.avatarUrl != null && provider.avatarUrl!.isNotEmpty)
-                  ? const Icon(Icons.person, size: 34, color: Colors.grey)
-                  : Text(initials, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
+              child: avatar.isNotEmpty
+                  ? null
+                  : Text(
+                      initials,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
             ),
             const SizedBox(height: 10),
 
@@ -79,8 +87,32 @@ class ProviderDetailsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              provider.profession ?? "Professional",
+              provider.profession,
               style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ✅ WEBSITE-LIKE CHIPS
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _StatChip(
+                  icon: Icons.star_rounded,
+                  iconColor: Colors.orange,
+                  text: "${provider.avgRating.toStringAsFixed(1)} (${provider.ratingCount})",
+                ),
+                _StatChip(
+                  icon: Icons.work_outline_rounded,
+                  text: "${provider.completedJobs} jobs",
+                ),
+                _StatChip(
+                  icon: Icons.payments_outlined,
+                  text: "From Rs. ${provider.startingPrice}",
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -101,28 +133,72 @@ class ProviderDetailsSheet extends StatelessWidget {
 
             Row(
               children: [
-                const Spacer(),
-                OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    child: const Text("Close"),
                   ),
-                  child: const Text("Close"),
                 ),
                 const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: onBook,
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onBook,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    ),
+                    child: const Text("Book Now"),
                   ),
-                  child: const Text("Book Now"),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static String _initials(String name) {
+    final t = name.trim();
+    if (t.isEmpty) return "U";
+    final parts = t.split(RegExp(r"\s+")).where((e) => e.isNotEmpty).toList();
+    final a = parts.isNotEmpty ? parts[0][0] : "U";
+    final b = parts.length > 1 ? parts[1][0] : "";
+    return ("$a$b").toUpperCase();
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color? iconColor;
+
+  const _StatChip({
+    required this.icon,
+    required this.text,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF3F4F6),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: iconColor ?? Colors.black54),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }
@@ -156,7 +232,12 @@ class _InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w700)),
+                Text(label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w700,
+                    )),
                 const SizedBox(height: 3),
                 Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
               ],

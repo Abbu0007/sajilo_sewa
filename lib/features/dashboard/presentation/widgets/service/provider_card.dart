@@ -18,11 +18,19 @@ class ProviderCard extends StatelessWidget {
     required this.onFavourite,
   });
 
+  String _resolveAvatarUrl(String? url) {
+    if (url == null) return "";
+    final u = url.trim();
+    if (u.isEmpty) return "";
+    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+  }
+
   @override
   Widget build(BuildContext context) {
-    final initials = provider.fullName.isEmpty
+    final initials = provider.fullName.trim().isEmpty
         ? "U"
         : provider.fullName
+            .trim()
             .split(RegExp(r"\s+"))
             .take(2)
             .map((e) => e.isNotEmpty ? e[0] : "")
@@ -33,6 +41,12 @@ class ProviderCard extends StatelessWidget {
 
     final rating = provider.avgRating;
     final ratingCount = provider.ratingCount;
+
+    final jobs = provider.completedJobs;
+    final price = provider.startingPrice;
+
+    final avatar = _resolveAvatarUrl(provider.avatarUrl);
+    final hasAvatar = avatar.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -49,8 +63,9 @@ class ProviderCard extends StatelessWidget {
               CircleAvatar(
                 radius: 22,
                 backgroundColor: const Color(0xFFF3F4F6),
-                child: (provider.avatarUrl != null && provider.avatarUrl!.isNotEmpty)
-                    ? const Icon(Icons.person, color: Colors.grey)
+                backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
+                child: hasAvatar
+                    ? null
                     : Text(
                         initials,
                         style: const TextStyle(
@@ -64,26 +79,44 @@ class ProviderCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(provider.fullName, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    Text(
+                      provider.fullName,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      provider.profession ?? "Professional",
+                      provider.profession,
                       style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                     ),
-
-                    // ✅ NEW: Rating row
                     const SizedBox(height: 6),
                     Row(
                       children: [
                         _StarRating(rating: rating),
                         const SizedBox(width: 6),
                         Text(
-                          ratingCount > 0 ? "${rating.toStringAsFixed(1)} ($ratingCount)" : "No ratings yet",
+                          ratingCount > 0
+                              ? "${rating.toStringAsFixed(1)} ($ratingCount)"
+                              : "No ratings yet",
                           style: TextStyle(
                             color: Colors.grey.shade700,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _Chip(
+                          icon: Icons.work_outline_rounded,
+                          label: "$jobs jobs",
+                        ),
+                        _Chip(
+                          icon: Icons.payments_outlined,
+                          label: "From Rs. $price",
                         ),
                       ],
                     ),
@@ -100,7 +133,6 @@ class ProviderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
           Row(
             children: [
               Expanded(
@@ -132,6 +164,39 @@ class ProviderCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _Chip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF3F4F6),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.black54),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ],
       ),
