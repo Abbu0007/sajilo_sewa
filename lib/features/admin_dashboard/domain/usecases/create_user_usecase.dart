@@ -15,6 +15,7 @@ class CreateUserUseCase {
     required String role,
     required String password,
     String? profession,
+    String? serviceSlug, 
     XFile? avatarFile,
   }) {
     return repository.createUser(
@@ -24,6 +25,7 @@ class CreateUserUseCase {
       role: role,
       password: password,
       profession: profession,
+      serviceSlug: serviceSlug, 
       avatarFile: avatarFile,
     );
   }

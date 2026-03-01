@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_service_entity.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/widgets/create/create_avatar_picker.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/widgets/create/create_card_shell.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/widgets/create/create_role_profession_row.dart';
@@ -11,10 +12,14 @@ class CreateUserForm extends StatefulWidget {
   final bool isLoading;
   final void Function(CreateUserFormResult result) onSubmit;
 
+  // ✅ NEW
+  final List<AdminServiceEntity> services;
+
   const CreateUserForm({
     super.key,
     required this.isLoading,
     required this.onSubmit,
+    required this.services,
   });
 
   @override
@@ -31,6 +36,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
   final _password = TextEditingController();
 
   String _role = 'client';
+  String? _serviceSlug; 
   XFile? _avatarFile;
 
   final _picker = ImagePicker();
@@ -70,6 +76,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
     final password = _password.text;
 
     final profession = _isProvider ? _profession.text.trim() : '';
+    final serviceSlug = _isProvider ? (_serviceSlug ?? '').trim() : '';
 
     widget.onSubmit(
       CreateUserFormResult(
@@ -78,6 +85,7 @@ class _CreateUserFormState extends State<CreateUserForm> {
         phone: phone,
         role: _role,
         profession: _isProvider ? profession : null,
+        serviceSlug: _isProvider ? serviceSlug : null, // ✅ NEW
         password: password,
         avatarFile: _avatarFile,
       ),
@@ -151,10 +159,18 @@ class _CreateUserFormState extends State<CreateUserForm> {
               onRoleChanged: (v) {
                 setState(() {
                   _role = v;
-                  if (!_isProvider) _profession.text = '';
+                  if (!_isProvider) {
+                    _profession.text = '';
+                    _serviceSlug = null; // ✅ clear service when not provider
+                  }
                 });
               },
               professionController: _profession,
+
+              // ✅ NEW
+              services: widget.services,
+              selectedServiceSlug: _serviceSlug,
+              onServiceChanged: (slug) => setState(() => _serviceSlug = slug),
             ),
 
             const SizedBox(height: 18),

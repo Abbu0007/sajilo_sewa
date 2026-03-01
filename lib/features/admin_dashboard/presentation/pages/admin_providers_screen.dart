@@ -313,9 +313,9 @@ class AdminProviderEditScreen extends ConsumerWidget {
             final err = await notifier.editUser(
               userId: user.id,
               fullName: result.fullName,
-              phone: result.phone,
-              role: result.role,
-              profession: result.profession,
+              phone: user.phone,
+              role: user.role,
+              profession: user.profession,
               avatarFile: result.pickedAvatar,
             );
 

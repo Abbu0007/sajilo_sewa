@@ -5,19 +5,11 @@ import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_user_
 
 class AdminUserEditResult {
   final String fullName;
-  final String phone;
-  final String role; // client/provider/admin
-  final String? profession;
   final XFile? pickedAvatar;
-  final bool removeAvatar;
 
   const AdminUserEditResult({
     required this.fullName,
-    required this.phone,
-    required this.role,
-    this.profession,
     this.pickedAvatar,
-    required this.removeAvatar,
   });
 }
 
@@ -37,83 +29,44 @@ class AdminUserEditForm extends StatefulWidget {
 
 class _AdminUserEditFormState extends State<AdminUserEditForm> {
   late final TextEditingController _name;
-  late final TextEditingController _profession;
 
-  String _role = 'client';
   XFile? _pickedAvatar;
-  bool _removeAvatar = false;
-
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
+
+  bool get _isProvider => widget.user.role.trim().toLowerCase() == 'provider';
 
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.user.fullName);
-    _profession = TextEditingController(text: widget.user.profession ?? '');
-    _role = widget.user.role.trim().toLowerCase().isEmpty
-        ? 'client'
-        : widget.user.role.trim().toLowerCase();
   }
 
   @override
   void dispose() {
     _name.dispose();
-    _profession.dispose();
     super.dispose();
   }
 
-  bool get _isProvider => _role == 'provider';
-
   Future<void> _pickFromGallery() async {
-    final file =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final file = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (file == null) return;
-    setState(() {
-      _pickedAvatar = file;
-      _removeAvatar = false;
-    });
+    setState(() => _pickedAvatar = file);
   }
 
   Future<void> _pickFromCamera() async {
-    final file =
-        await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    final file = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
     if (file == null) return;
-    setState(() {
-      _pickedAvatar = file;
-      _removeAvatar = false;
-    });
-  }
-
-  void _removeCurrentAvatar() {
-    setState(() {
-      _pickedAvatar = null;
-      _removeAvatar = true;
-    });
+    setState(() => _pickedAvatar = file);
   }
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final fullName = _name.text.trim();
-    final phone = widget.user.phone;
-    final profession = _isProvider ? _profession.text.trim() : '';
-
-    if (_isProvider && profession.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profession is required for service provider')),
-      );
-      return;
-    }
-
     widget.onSave(
       AdminUserEditResult(
-        fullName: fullName,
-        phone: phone,
-        role: _role,
-        profession: _isProvider ? profession : null,
+        fullName: _name.text.trim(),
         pickedAvatar: _pickedAvatar,
-        removeAvatar: _removeAvatar,
       ),
     );
   }
@@ -123,8 +76,7 @@ class _AdminUserEditFormState extends State<AdminUserEditForm> {
     final scheme = Theme.of(context).colorScheme;
 
     final networkAvatar = (widget.user.avatarUrl ?? '').trim();
-    final showNetworkAvatar =
-        networkAvatar.isNotEmpty && !_removeAvatar && _pickedAvatar == null;
+    final showNetworkAvatar = networkAvatar.isNotEmpty && _pickedAvatar == null;
 
     return Form(
       key: _formKey,
@@ -132,19 +84,19 @@ class _AdminUserEditFormState extends State<AdminUserEditForm> {
         children: [
           _CoverHeader(
             fullName: widget.user.fullName,
-            role: _role,
+            role: widget.user.role,
             email: widget.user.email,
             phone: widget.user.phone,
+            profession: widget.user.profession,
+            serviceSlug: widget.user.serviceSlug,
+            isProvider: _isProvider,
             picked: _pickedAvatar,
             showNetwork: showNetworkAvatar,
             networkUrl: networkAvatar,
             onCamera: _pickFromCamera,
             onGallery: _pickFromGallery,
-            onRemoveAvatar: _removeCurrentAvatar,
           ),
-
           const SizedBox(height: 14),
-
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -163,12 +115,9 @@ class _AdminUserEditFormState extends State<AdminUserEditForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Edit Details',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
+                const Text('Edit Details',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 10),
-
                 TextFormField(
                   controller: _name,
                   decoration: const InputDecoration(
@@ -178,54 +127,43 @@ class _AdminUserEditFormState extends State<AdminUserEditForm> {
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                 ),
-                const SizedBox(height: 12),
-
-                TextFormField(
-                  initialValue: widget.user.phone,
-                  enabled: false,
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                    helperText: 'Phone number cannot be changed',
-                  ),
+                const SizedBox(height: 14),
+                _LockedField(
+                  icon: Icons.badge_outlined,
+                  label: 'Role',
+                  value: widget.user.role,
                 ),
                 const SizedBox(height: 12),
-
-                DropdownButtonFormField<String>(
-                  value: _role,
-                  decoration: const InputDecoration(
-                    labelText: 'Role',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'client', child: Text('Client')),
-                    DropdownMenuItem(value: 'provider', child: Text('Service Provider')),
-                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                  ],
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() {
-                      _role = v;
-                      if (!_isProvider) _profession.text = '';
-                    });
-                  },
+                _LockedField(
+                  icon: Icons.email_outlined,
+                  label: 'Email',
+                  value: widget.user.email,
                 ),
                 const SizedBox(height: 12),
-
-                TextFormField(
-                  controller: _profession,
-                  enabled: _isProvider,
-                  decoration: InputDecoration(
-                    labelText: 'Profession (provider only)',
-                    prefixIcon: const Icon(Icons.work_outline),
-                    hintText:
-                        _isProvider ? 'e.g. Plumber, Electrician' : 'Disabled for client/admin',
-                  ),
+                _LockedField(
+                  icon: Icons.phone_outlined,
+                  label: 'Phone',
+                  value: widget.user.phone,
                 ),
-
+                if (_isProvider) ...[
+                  const SizedBox(height: 12),
+                  _LockedField(
+                    icon: Icons.work_outline,
+                    label: 'Profession',
+                    value: (widget.user.profession ?? '').trim().isEmpty
+                        ? '—'
+                        : widget.user.profession!.trim(),
+                  ),
+                  const SizedBox(height: 12),
+                  _LockedField(
+                    icon: Icons.miscellaneous_services_outlined,
+                    label: 'Service Slug',
+                    value: (widget.user.serviceSlug ?? '').trim().isEmpty
+                        ? '—'
+                        : widget.user.serviceSlug!.trim(),
+                  ),
+                ],
                 const SizedBox(height: 16),
-
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -250,7 +188,7 @@ class _AdminUserEditFormState extends State<AdminUserEditForm> {
                       ),
                       child: const Text(
                         'Save Changes',
-                        style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white),
+                        style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
                       ),
                     ),
                   ),
@@ -269,6 +207,9 @@ class _CoverHeader extends StatelessWidget {
   final String role;
   final String email;
   final String phone;
+  final String? profession;
+  final String? serviceSlug;
+  final bool isProvider;
 
   final XFile? picked;
   final bool showNetwork;
@@ -276,19 +217,20 @@ class _CoverHeader extends StatelessWidget {
 
   final VoidCallback onCamera;
   final VoidCallback onGallery;
-  final VoidCallback onRemoveAvatar;
 
   const _CoverHeader({
     required this.fullName,
     required this.role,
     required this.email,
     required this.phone,
+    required this.profession,
+    required this.serviceSlug,
+    required this.isProvider,
     required this.picked,
     required this.showNetwork,
     required this.networkUrl,
     required this.onCamera,
     required this.onGallery,
-    required this.onRemoveAvatar,
   });
 
   @override
@@ -320,7 +262,7 @@ class _CoverHeader extends StatelessWidget {
         child: Column(
           children: [
             AspectRatio(
-              aspectRatio: 1.2, 
+              aspectRatio: 1.2,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -339,47 +281,26 @@ class _CoverHeader extends StatelessWidget {
                             ),
                           ),
                   ),
-
-                  
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Color(0x99000000),
-                        ],
+                        colors: [Colors.transparent, Color(0x99000000)],
                       ),
                     ),
                   ),
-
-                  
                   Positioned(
                     top: 10,
                     right: 10,
                     child: Row(
                       children: [
-                        _SmallIconBtn(
-                          icon: Icons.camera_alt_outlined,
-                          onTap: onCamera,
-                        ),
+                        _SmallIconBtn(icon: Icons.camera_alt_outlined, onTap: onCamera),
                         const SizedBox(width: 8),
-                        _SmallIconBtn(
-                          icon: Icons.photo_library_outlined,
-                          onTap: onGallery,
-                        ),
-                        const SizedBox(width: 8),
-                        _SmallIconBtn(
-                          icon: Icons.delete_outline,
-                          onTap: onRemoveAvatar,
-                          isDanger: true,
-                        ),
+                        _SmallIconBtn(icon: Icons.photo_library_outlined, onTap: onGallery),
                       ],
                     ),
                   ),
-
-                  // bottom-left name + role chip
                   Positioned(
                     left: 12,
                     right: 12,
@@ -406,8 +327,6 @@ class _CoverHeader extends StatelessWidget {
                 ],
               ),
             ),
-
-            // details strip
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -415,11 +334,63 @@ class _CoverHeader extends StatelessWidget {
                   _InfoRow(icon: Icons.email_outlined, label: 'Email', value: email),
                   const SizedBox(height: 8),
                   _InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: phone),
+                  if (isProvider) ...[
+                    const SizedBox(height: 8),
+                    _InfoRow(
+                      icon: Icons.miscellaneous_services_outlined,
+                      label: 'Service',
+                      value: (serviceSlug ?? '').trim().isEmpty ? '—' : serviceSlug!.trim(),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LockedField extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _LockedField({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Colors.grey.shade700;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: muted),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 92,
+            child: Text(label, style: TextStyle(fontWeight: FontWeight.w800, color: muted)),
+          ),
+          const Icon(Icons.lock_outline, size: 16, color: Color(0xFF64748B)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF334155)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -432,12 +403,6 @@ class _RoleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = role.trim().toLowerCase();
-    final label = (r == 'provider')
-        ? 'provider'
-        : (r == 'admin')
-            ? 'admin'
-            : 'client';
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -446,12 +411,8 @@ class _RoleChip extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-        ),
+        r,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12),
       ),
     );
   }
@@ -460,12 +421,10 @@ class _RoleChip extends StatelessWidget {
 class _SmallIconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final bool isDanger;
 
   const _SmallIconBtn({
     required this.icon,
     required this.onTap,
-    this.isDanger = false,
   });
 
   @override
@@ -478,11 +437,7 @@ class _SmallIconBtn extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isDanger ? const Color(0xFFFFCDD2) : Colors.white,
-          ),
+          child: Icon(icon, size: 18, color: Colors.white),
         ),
       ),
     );
@@ -510,10 +465,7 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: 10),
         SizedBox(
           width: 62,
-          child: Text(
-            label,
-            style: TextStyle(color: muted, fontWeight: FontWeight.w700),
-          ),
+          child: Text(label, style: TextStyle(color: muted, fontWeight: FontWeight.w700)),
         ),
         Expanded(
           child: Text(

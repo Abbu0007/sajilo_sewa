@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/data/datasources/remote/admin_remote_datasource.dart';
+import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_service_entity.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_user_entity.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/domain/repositories/i_admin_repository.dart';
 
@@ -30,6 +31,7 @@ class AdminRepositoryImpl implements IAdminRepository {
     required String phone,
     required String role,
     String? profession,
+    String? serviceSlug,
     String? password,
     XFile? avatarFile,
   }) async {
@@ -40,6 +42,7 @@ class AdminRepositoryImpl implements IAdminRepository {
         phone: phone,
         role: role,
         profession: profession,
+        serviceSlug: serviceSlug,
         password: password,
         avatarFile: avatarFile
       );
@@ -84,5 +87,16 @@ class AdminRepositoryImpl implements IAdminRepository {
       if (e is Failure) return Left(e);
       return Left(ServerFailure(message: e.toString()));
     }
+  }
+
+  @override
+  Future<Either<Failure, List<AdminServiceEntity>>> getServices() async {
+  try {
+    final items = await remote.getServices();
+    return Right(items.map((e) => e.toEntity()).toList());
+  } catch (e) {
+    if (e is Failure) return Left(e);
+    return Left(ServerFailure(message: e.toString()));
+  }
   }
 }

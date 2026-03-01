@@ -4,7 +4,8 @@ class CreateUserFormResult {
   final String fullName;
   final String email;
   final String phone;
-  final String role; // client | provider
+  final String role;
+  final String? serviceSlug; // client | provider
   final String? profession;
   final String password;
   final XFile? avatarFile;
@@ -14,6 +15,7 @@ class CreateUserFormResult {
     required this.email,
     required this.phone,
     required this.role,
+    this.serviceSlug,
     required this.password,
     this.profession,
     this.avatarFile,

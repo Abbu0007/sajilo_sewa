@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/features/admin_dashboard/presentation/pages/admin_bookings_screen.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/pages/admin_clients_screen.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/pages/admin_create_screen.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/presentation/pages/admin_providers_screen.dart';
@@ -26,7 +27,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
       const AdminClientsScreen(),
       const AdminProvidersScreen(),
       const AdminCreateScreen(),
-      const _AdminBookingsPlaceholder(),
+      const AdminBookingsScreen(),
     ];
 
     return Scaffold(
@@ -62,22 +63,6 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             label: 'Bookings',
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AdminBookingsPlaceholder extends StatelessWidget {
-  const _AdminBookingsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Bookings UI-only (Next)',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
       ),
     );
   }

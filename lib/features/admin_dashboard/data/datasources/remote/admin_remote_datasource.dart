@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
+import 'package:sajilo_sewa/features/admin_dashboard/data/models/admin_service_api_model.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/data/models/admin_user_api_model.dart';
 
 class AdminRemoteDatasource {
@@ -13,6 +14,7 @@ class AdminRemoteDatasource {
   static String _userByIdEndpoint(String id) => '/api/admin/users/$id';
   static String _uploadAvatarEndpoint(String id) => '/api/admin/users/$id/avatar';
   static String _deleteAvatarEndpoint(String id) => '/api/admin/users/$id/avatar';
+  static const String _servicesEndpoint = '/api/admin/services';
 
   Options _authOptions() {
     final token = UserSessionService.instance.getToken();
@@ -52,11 +54,13 @@ class AdminRemoteDatasource {
   required String phone,
   required String role,
   String? profession,
+  String? serviceSlug,
   String? password,
   XFile? avatarFile,
 }) async {
   try {
     final parts = _splitName(fullName);
+    final normalizedRole = role.trim().toLowerCase();
 
     final form = FormData.fromMap({
       'firstName': parts['firstName'],
@@ -66,6 +70,7 @@ class AdminRemoteDatasource {
       'role': role.trim(),
       'password': (password ?? '').trim(),
       'profession': role.trim() == 'provider' ? (profession ?? '').trim() : '',
+      'serviceSlug': normalizedRole == 'provider' ? (serviceSlug ?? '').trim() : '', 
       if (avatarFile != null)
         'avatar': await MultipartFile.fromFile(
           avatarFile.path,
@@ -209,6 +214,29 @@ Future<AdminUserApiModel> updateUser({
     }
   }
 
+  Future<List<AdminServiceApiModel>> getServices() async {
+  try {
+    final res = await dio.get(
+      _servicesEndpoint,
+      options: _authOptions(),
+    );
+
+    final data = res.data;
+    final List list = (data is Map<String, dynamic>)
+        ? (data['items'] as List? ?? const [])
+        : (data as List? ?? const []);
+
+    return list
+        .map((e) => AdminServiceApiModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  } on DioException catch (e) {
+    throw _mapDioError(e);
+  } catch (e) {
+    throw ServerFailure(message: 'Failed to fetch services: $e');
+  }
+}
+
+
   Map<String, String> _splitName(String fullName) {
     final parts = fullName
         .trim()
@@ -242,4 +270,8 @@ Future<AdminUserApiModel> updateUser({
 
     return ServerFailure(message: msg);
   }
+
+
+
+
 }

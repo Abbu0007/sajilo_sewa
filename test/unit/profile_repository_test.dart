@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/profile_remote_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/data/models/profile_api_model.dart';
-import 'package:sajilo_sewa/features/dashboard/data/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/data/repositories/profile_repository_impl.dart';
 
 class MockProfileRemoteDatasource extends Mock implements IProfileRemoteDataSource {}
 

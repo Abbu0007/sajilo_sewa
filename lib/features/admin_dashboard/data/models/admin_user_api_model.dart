@@ -8,8 +8,14 @@ class AdminUserApiModel {
   final String email;
   final String phone;
   final String role;
+
   final String? profession;
+  final String? serviceSlug;
   final String? avatarUrl;
+
+  final double ratingAvg;
+  final int ratingCount;
+  final int completedBookings;
 
   AdminUserApiModel({
     required this.id,
@@ -19,10 +25,26 @@ class AdminUserApiModel {
     required this.phone,
     required this.role,
     this.profession,
+    this.serviceSlug,
     this.avatarUrl,
+    this.ratingAvg = 0.0,
+    this.ratingCount = 0,
+    this.completedBookings = 0,
   });
 
   String get fullName => '$firstName $lastName'.trim();
+
+  static double _toDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString()) ?? 0.0;
+  }
+
+  static int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString()) ?? 0;
+  }
 
   factory AdminUserApiModel.fromJson(Map<String, dynamic> json) {
     final rawAvatar =
@@ -36,6 +58,10 @@ class AdminUserApiModel {
       phone: (json['phone'] ?? '').toString(),
       role: (json['role'] ?? '').toString(),
       profession: json['profession']?.toString(),
+      serviceSlug: json['serviceSlug']?.toString(),
+      ratingAvg: _toDouble(json['ratingAvg']),
+      ratingCount: _toInt(json['ratingCount']),
+      completedBookings: _toInt(json['completedBookings']),
       avatarUrl: rawAvatar == null || rawAvatar.isEmpty
           ? null
           : UrlUtils.normalizeMediaUrl(rawAvatar),
@@ -49,6 +75,10 @@ class AdminUserApiModel {
         phone: phone,
         role: role,
         profession: profession,
+        serviceSlug: serviceSlug,
         avatarUrl: avatarUrl,
+        ratingAvg: ratingAvg,
+        ratingCount: ratingCount,
+        completedBookings: completedBookings,
       );
 }

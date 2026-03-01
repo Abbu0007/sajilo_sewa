@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
-import 'package:sajilo_sewa/features/dashboard/domain/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/repositories/i_profile_repository.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_profile_usecase.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/usecases/upload_avatar_usecase.dart';
 

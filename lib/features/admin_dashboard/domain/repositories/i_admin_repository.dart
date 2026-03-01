@@ -2,11 +2,15 @@ import 'package:dartz/dartz.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_user_entity.dart';
+import 'package:sajilo_sewa/features/admin_dashboard/domain/entities/admin_service_entity.dart'; 
 
 abstract class IAdminRepository {
   Future<Either<Failure, List<AdminUserEntity>>> getUsersByRole({
     required String role,
   });
+
+ 
+  Future<Either<Failure, List<AdminServiceEntity>>> getServices();
 
   Future<Either<Failure, AdminUserEntity>> createUser({
     required String fullName,
@@ -14,6 +18,7 @@ abstract class IAdminRepository {
     required String phone,
     required String role,
     String? profession,
+    String? serviceSlug, 
     String? password,
     XFile? avatarFile,
   });

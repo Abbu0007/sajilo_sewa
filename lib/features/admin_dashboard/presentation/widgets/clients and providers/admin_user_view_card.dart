@@ -13,6 +13,8 @@ class AdminUserViewCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  bool get _isProvider => user.role.trim().toLowerCase() == 'provider';
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -21,7 +23,6 @@ class AdminUserViewCard extends StatelessWidget {
 
     return Column(
       children: [
-        // ---------------- COVER HEADER ----------------
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
@@ -47,10 +48,7 @@ class AdminUserViewCard extends StatelessWidget {
                       Container(
                         color: scheme.primary.withOpacity(0.10),
                         child: hasAvatar
-                            ? Image.network(
-                                avatarUrl,
-                                fit: BoxFit.cover,
-                              )
+                            ? Image.network(avatarUrl, fit: BoxFit.cover)
                             : Center(
                                 child: Text(
                                   user.fullName.isNotEmpty
@@ -69,10 +67,7 @@ class AdminUserViewCard extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Color(0x99000000),
-                            ],
+                            colors: [Colors.transparent, Color(0x99000000)],
                           ),
                         ),
                       ),
@@ -102,35 +97,47 @@ class AdminUserViewCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // ---------------- DETAILS ----------------
                 Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(
                     children: [
-                      _InfoRow(
-                        icon: Icons.email_outlined,
-                        label: 'Email',
-                        value: user.email,
+                      Row(
+                        children: [
+                          _MiniStat(
+                            icon: Icons.star_rounded,
+                            label: '${user.ratingAvg.toStringAsFixed(1)} (${user.ratingCount})',
+                            bg: const Color(0xFFFFF7ED),
+                            fg: const Color(0xFF9A3412),
+                            border: const Color(0xFFFED7AA),
+                          ),
+                          const SizedBox(width: 10),
+                          _MiniStat(
+                            icon: Icons.verified_rounded,
+                            label: '${user.completedBookings} completed',
+                            bg: const Color(0xFFECFDF5),
+                            fg: const Color(0xFF047857),
+                            border: const Color(0xFFA7F3D0),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 12),
+                      _InfoRow(icon: Icons.email_outlined, label: 'Email', value: user.email),
                       const SizedBox(height: 8),
-                      _InfoRow(
-                        icon: Icons.phone_outlined,
-                        label: 'Phone',
-                        value: user.phone,
-                      ),
+                      _InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: user.phone),
                       const SizedBox(height: 8),
-                      _InfoRow(
-                        icon: Icons.badge_outlined,
-                        label: 'Role',
-                        value: user.role,
-                      ),
-                      if ((user.profession ?? '').trim().isNotEmpty) ...[
+                      _InfoRow(icon: Icons.badge_outlined, label: 'Role', value: user.role),
+                      if (_isProvider) ...[
                         const SizedBox(height: 8),
                         _InfoRow(
                           icon: Icons.work_outline,
                           label: 'Profession',
-                          value: user.profession!,
+                          value: (user.profession ?? '').trim().isEmpty ? '—' : user.profession!.trim(),
+                        ),
+                        const SizedBox(height: 8),
+                        _InfoRow(
+                          icon: Icons.miscellaneous_services_outlined,
+                          label: 'Service',
+                          value: (user.serviceSlug ?? '').trim().isEmpty ? '—' : user.serviceSlug!.trim(),
                         ),
                       ],
                     ],
@@ -140,25 +147,17 @@ class AdminUserViewCard extends StatelessWidget {
             ),
           ),
         ),
-
         const SizedBox(height: 16),
-
-        // ---------------- ACTION BUTTONS ----------------
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit_outlined),
-                label: const Text(
-                  'Edit',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
+                label: const Text('Edit', style: TextStyle(fontWeight: FontWeight.w800)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ),
@@ -176,22 +175,14 @@ class AdminUserViewCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline, color: Colors.white),
-                  label: const Text(
-                    'Delete',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
+                  label: const Text('Delete',
+                      style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    overlayColor: Colors.white.withOpacity(0.08),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
@@ -203,7 +194,48 @@ class AdminUserViewCard extends StatelessWidget {
   }
 }
 
-// ---------------- HELPERS ----------------
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color bg;
+  final Color fg;
+  final Color border;
+
+  const _MiniStat({
+    required this.icon,
+    required this.label,
+    required this.bg,
+    required this.fg,
+    required this.border,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: fg),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w900, color: fg),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
@@ -226,10 +258,7 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: 10),
         SizedBox(
           width: 82,
-          child: Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.w800, color: muted),
-          ),
+          child: Text(label, style: TextStyle(fontWeight: FontWeight.w800, color: muted)),
         ),
         Expanded(
           child: Text(
@@ -259,11 +288,7 @@ class _RoleChip extends StatelessWidget {
       ),
       child: Text(
         r,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-        ),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12),
       ),
     );
   }

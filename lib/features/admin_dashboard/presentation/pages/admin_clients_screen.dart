@@ -320,33 +320,31 @@ class AdminUserEditScreen extends ConsumerWidget {
         child: AdminUserEditForm(
           user: user,
           onSave: (result) async {
-            final err = await notifier.editUser(
-              userId: user.id,
-              fullName: result.fullName,
-              phone: result.phone,
-              role: result.role,
-              profession: result.profession,
-              avatarFile: result.pickedAvatar,
-            );
+          final err = await notifier.editUser(
+            userId: user.id,
+            fullName: result.fullName,
+            phone: user.phone,
+            role: user.role,
+            profession: user.profession,
+            avatarFile: result.pickedAvatar,
+          );
 
-            if (!context.mounted) return;
+          if (!context.mounted) return;
 
-            if (err != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(err)),
-              );
-              return;
-            }
+          if (err != null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+            return;
+          }
 
-            await notifier.refresh();
+          await notifier.refresh();
 
-            if (!context.mounted) return;
+          if (!context.mounted) return;
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Saved successfully')),
-            );
-            Navigator.pop(context);
-          },
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Saved successfully')),
+          );
+          Navigator.pop(context);
+        },
         ),
       ),
     );
