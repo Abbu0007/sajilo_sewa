@@ -4,8 +4,9 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/profile_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/data/models/profile_stats_api_model.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/entities/profile_entity.dart';
-import 'package:sajilo_sewa/features/dashboard/domain/repositories/profile_repository.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/repositories/i_profile_repository.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/providers/profile_providers.dart';
 
 final profileRepositoryProvider = Provider<IProfileRepository>((ref) {
@@ -56,6 +57,18 @@ class ProfileRepository implements IProfileRepository {
     try {
       final model = await _profileRemoteDataSource.uploadAvatar(file: file);
       return right(model.toEntity());
+    } catch (e) {
+      if (e is Failure) return left(e);
+      return left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // ✅ ADD
+  @override
+  Future<Either<Failure, ProfileStatsApiModel>> getClientProfileStats() async {
+    try {
+      final stats = await _profileRemoteDataSource.getClientProfileStats();
+      return right(stats);
     } catch (e) {
       if (e is Failure) return left(e);
       return left(ServerFailure(message: e.toString()));
