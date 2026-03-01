@@ -27,6 +27,7 @@ class ApiEndpoints {
   static const String me = '/api/users/me';
   static const String updateMe = '/api/users/me';
   static const String uploadAvatar = '/api/users/me/avatar';
+  static const String clientMeProfile = "/api/clients/me/profile";
 
   // --- Services ---
   static const String services = "/api/services";
