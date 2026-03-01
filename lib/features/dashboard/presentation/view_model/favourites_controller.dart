@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_service_usecase.dart';
 import '../../domain/entities/provider_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/usecases/get_favourites_usecase.dart';
 import '../../domain/usecases/toggle_favourite_usecase.dart';
+import '../../domain/usecases/get_service_usecase.dart';
 
 class FavouritesController extends ChangeNotifier {
   final GetFavouritesUseCase getFavourites;
@@ -20,7 +20,12 @@ class FavouritesController extends ChangeNotifier {
   String? error;
 
   List<ProviderEntity> items = [];
-  final Map<String, String> serviceIdBySlug = {}; // slug -> _id
+ 
+  final Set<String> favIds = {};
+
+  final Map<String, String> serviceIdBySlug = {};
+
+  bool isFavourite(String providerId) => favIds.contains(providerId);
 
   Future<void> load() async {
     loading = true;
@@ -28,14 +33,19 @@ class FavouritesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // services needed for booking from favourites (slug -> id)
       final List<ServiceEntity> services = await getServices();
       serviceIdBySlug
         ..clear()
-        ..addEntries(services.map((s) => MapEntry(s.slug, s.id)));
+        ..addEntries(
+          services.map((s) => MapEntry((s.slug ?? '').trim(), s.id)),
+        );
 
       final favs = await getFavourites();
       items = favs;
+
+      favIds
+        ..clear()
+        ..addAll(favs.map((p) => p.id));
     } catch (e) {
       error = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -50,16 +60,45 @@ class FavouritesController extends ChangeNotifier {
     return serviceIdBySlug[slug];
   }
 
-  /// Remove favourite from list instantly (like your web)
-  Future<void> removeFavourite(String providerId) async {
-    try {
-      // toggle will remove on backend
-      await toggleFavourite(providerId);
+  Future<void> toggle(String providerId) async {
+    error = null;
 
-      items = items.where((x) => x.id != providerId).toList();
-      notifyListeners();
-    } catch (_) {
-      // ignore for now (you can show toast later)
+    final wasFav = favIds.contains(providerId);
+
+    if (wasFav) {
+      favIds.remove(providerId);
+      items.removeWhere((x) => x.id == providerId);
+    } else {
+      favIds.add(providerId);
     }
+    notifyListeners();
+
+    try {
+      final nowFav = await toggleFavourite(providerId);
+      if (nowFav) {
+        favIds.add(providerId);
+        if (!wasFav) {
+          await load();
+        } else {
+          notifyListeners();
+        }
+      } else {
+        favIds.remove(providerId);
+        items.removeWhere((x) => x.id == providerId);
+        notifyListeners();
+      }
+    } catch (e) {
+      if (wasFav) {
+        favIds.add(providerId);
+      } else {
+        favIds.remove(providerId);
+      }
+      error = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeFavourite(String providerId) async {
+    await toggle(providerId);
   }
 }
