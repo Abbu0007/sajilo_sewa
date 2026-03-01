@@ -12,14 +12,13 @@ class ProviderBookingsController extends ChangeNotifier {
   final RejectBookingUseCase reject;
   final UpdateBookingStatusUseCase updateStatus;
   final CreateRatingUseCase createRating;
-  
 
   ProviderBookingsController({
     required this.getBookings,
     required this.accept,
     required this.reject,
     required this.updateStatus,
-    required this.createRating
+    required this.createRating,
   });
 
   bool loading = false;
@@ -49,20 +48,10 @@ class ProviderBookingsController extends ChangeNotifier {
   }
 
   Future<void> acceptBooking(String bookingId, {String? reloadStatus}) async {
-    _actionBusy = true;
-    error = null;
-    notifyListeners();
-
-    try {
+    await _runAction(() async {
       await accept(bookingId);
       await load(status: reloadStatus ?? _status);
-    } catch (e) {
-      error = e.toString().replaceFirst('Exception: ', '');
-      notifyListeners();
-    } finally {
-      _actionBusy = false;
-      notifyListeners();
-    }
+    });
   }
 
   Future<void> rejectBooking(
@@ -70,64 +59,100 @@ class ProviderBookingsController extends ChangeNotifier {
     String? reason,
     String? reloadStatus,
   }) async {
-    _actionBusy = true;
-    error = null;
-    notifyListeners();
-
-    try {
+    await _runAction(() async {
       await reject(bookingId, reason: reason);
       await load(status: reloadStatus ?? _status);
-    } catch (e) {
-      error = e.toString().replaceFirst('Exception: ', '');
-      notifyListeners();
-    } finally {
-      _actionBusy = false;
-      notifyListeners();
-    }
+    });
   }
 
-  Future<void> updateBookingStatus(
+  // ---------------------------------------------------
+  // STATUS UPDATES (clean wrappers)
+  // ---------------------------------------------------
+
+  Future<void> markInProgress(
     String bookingId, {
-    required String statusValue, // in_progress | completed | cancelled
+    String? reloadStatus,
+  }) async {
+    await _runAction(() async {
+      await updateStatus(
+        bookingId,
+        status: "in_progress",
+      );
+      await load(status: reloadStatus ?? _status);
+    });
+  }
+
+  Future<void> requestPayment(
+    String bookingId, {
+    required num price,
     String? reason,
     String? reloadStatus,
   }) async {
+    await _runAction(() async {
+      await updateStatus(
+        bookingId,
+        status: "awaiting_payment_confirmation",
+        reason: reason,
+        price: price, // ⚠️ important
+      );
+      await load(status: reloadStatus ?? _status);
+    });
+  }
+
+  Future<void> markCompleted(
+    String bookingId, {
+    String? reloadStatus,
+  }) async {
+    await _runAction(() async {
+      await updateStatus(
+        bookingId,
+        status: "completed",
+      );
+      await load(status: reloadStatus ?? _status);
+    });
+  }
+
+  Future<void> cancelBooking(
+    String bookingId, {
+    String? reason,
+    String? reloadStatus,
+  }) async {
+    await _runAction(() async {
+      await updateStatus(
+        bookingId,
+        status: "cancelled",
+        reason: reason,
+      );
+      await load(status: reloadStatus ?? _status);
+    });
+  }
+
+  Future<void> rate({
+    required String bookingId,
+    required int stars,
+    String? comment,
+  }) async {
+    await _runAction(() async {
+      await createRating(
+        bookingId: bookingId,
+        stars: stars,
+        comment: comment,
+      );
+    });
+  }
+
+  Future<void> _runAction(Future<void> Function() action) async {
     _actionBusy = true;
     error = null;
     notifyListeners();
 
     try {
-      await updateStatus(
-        bookingId,
-        status: statusValue,
-        reason: reason,
-      );
-      await load(status: reloadStatus ?? _status);
+      await action();
     } catch (e) {
       error = e.toString().replaceFirst('Exception: ', '');
-      notifyListeners();
     } finally {
       _actionBusy = false;
       notifyListeners();
     }
-  }
-
-  Future<void> rate({
-  required String bookingId,
-  required int stars,
-  String? comment,
-  }) async {
-  _actionBusy = true;
-  error = null;
-  notifyListeners();
-
-  try {
-    await createRating(bookingId: bookingId, stars: stars, comment: comment);
-  } catch (e) {
-    error = e.toString().replaceFirst('Exception: ', '');
-  } finally {
-    _actionBusy = false;
-    notifyListeners();
-  }
   }
 }

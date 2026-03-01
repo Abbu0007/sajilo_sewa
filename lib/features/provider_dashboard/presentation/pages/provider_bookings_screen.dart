@@ -29,8 +29,10 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     _StatusTab(label: "Pending", value: "pending"),
     _StatusTab(label: "Confirmed", value: "confirmed"),
     _StatusTab(label: "In Progress", value: "in_progress"),
+    _StatusTab(label: "Awaiting Payment", value: "awaiting_payment_confirmation"),
     _StatusTab(label: "Completed", value: "completed"),
     _StatusTab(label: "Cancelled", value: "cancelled"),
+    _StatusTab(label: "Rejected", value: "rejected"),
   ];
 
   String _selectedStatus = "all";
@@ -60,6 +62,12 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     super.dispose();
   }
 
+  num _parseNum(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return 0;
+    return num.tryParse(s) ?? 0;
+  }
+
   Future<void> _openRatingSheet({
     required String bookingId,
     required String title,
@@ -74,46 +82,60 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.62,
-        child: RateUserSheet(
-          title: title,
-          subtitle: subtitle,
-          busy: controller.actionBusy,
-          onSubmit: (stars, comment) async {
-            await controller.rate(
-              bookingId: bookingId,
-              stars: stars,
-              comment: comment,
-            );
+      builder: (ratingCtx) {
+        Future<void> closeRating() async {
+          if (Navigator.of(ratingCtx).canPop()) {
+            Navigator.of(ratingCtx).pop();
+          }
+        }
 
-            // if backend says already rated, show message
-            final err = controller.error ?? "";
-            if (!mounted) return;
+        return FractionallySizedBox(
+          heightFactor: 0.62,
+          child: RateUserSheet(
+            title: title,
+            subtitle: subtitle,
+            busy: controller.actionBusy,
+            onSubmit: (stars, comment) async {
+              await controller.rate(
+                bookingId: bookingId,
+                stars: stars,
+                comment: comment,
+              );
 
-            if (err.toLowerCase().contains("already rated") ||
-                err.toLowerCase().contains("already rated this booking") ||
-                err.toLowerCase().contains("you already rated")) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Already rated.")),
-              );
-            } else if (err.isNotEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(err)),
-              );
-            } else {
+              final err = (controller.error ?? "").trim();
+              if (!mounted) return;
+
+              if (err.toLowerCase().contains("already rated") ||
+                  err.toLowerCase().contains("already rated this booking") ||
+                  err.toLowerCase().contains("you already rated")) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Already rated.")),
+                );
+                return;
+              }
+
+              if (err.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(err)),
+                );
+                return;
+              }
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Thanks! Rating submitted.")),
               );
-              Navigator.pop(context);
-            }
-          },
-        ),
-      ),
+
+              await closeRating();
+            },
+          ),
+        );
+      },
     );
   }
 
   Future<void> _openDetails(ProviderBookingEntity b) async {
+    if (!mounted) return;
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -121,73 +143,100 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.88,
-        child: ProviderBookingDetailsSheet(
-          booking: b,
-          busy: controller.actionBusy,
-          onAccept: b.status == "pending"
-              ? () async {
-                  await controller.acceptBooking(b.id, reloadStatus: _selectedStatus);
-                  if (mounted) Navigator.pop(context);
-                }
-              : null,
-          onReject: b.status == "pending"
-              ? (reason) async {
-                  await controller.rejectBooking(
-                    b.id,
-                    reason: reason,
-                    reloadStatus: _selectedStatus,
-                  );
-                  if (mounted) Navigator.pop(context);
-                }
-              : null,
-          onMarkInProgress: (b.status == "confirmed")
-              ? () async {
-                  await controller.updateBookingStatus(
-                    b.id,
-                    statusValue: "in_progress",
-                    reloadStatus: _selectedStatus,
-                  );
-                  if (mounted) Navigator.pop(context);
-                }
-              : null,
+      builder: (sheetCtx) {
+        // ✅ Always pop using sheetCtx (never use outer page context)
+        Future<void> closeSheet() async {
+          if (Navigator.of(sheetCtx).canPop()) {
+            Navigator.of(sheetCtx).pop();
+          }
+        }
 
-          
-          onMarkCompleted: (b.status == "in_progress")
-              ? () async {
-                  await controller.updateBookingStatus(
-                    b.id,
-                    statusValue: "completed",
-                    reloadStatus: _selectedStatus,
-                  );
+        return FractionallySizedBox(
+          heightFactor: 0.88,
+          child: ProviderBookingDetailsSheet(
+            booking: b,
+            busy: controller.actionBusy,
 
-                  if (!mounted) return;
+            onAccept: b.status == "pending"
+                ? () async {
+                    await controller.acceptBooking(b.id, reloadStatus: _selectedStatus);
+                    if (!mounted) return;
+                    await closeSheet();
+                  }
+                : null,
 
-                  Navigator.pop(context);
+            onReject: b.status == "pending"
+                ? (reason) async {
+                    await controller.rejectBooking(
+                      b.id,
+                      reason: (reason ?? "").trim().isEmpty ? null : reason!.trim(),
+                      reloadStatus: _selectedStatus,
+                    );
+                    if (!mounted) return;
+                    await closeSheet();
+                  }
+                : null,
 
-                  
-                  await _openRatingSheet(
-                    bookingId: b.id,
-                    title: "Rate your client",
-                    subtitle: "How was the experience with this client?",
-                  );
-                }
-              : null,
+            onMarkInProgress: (b.status == "confirmed")
+                ? () async {
+                    await controller.markInProgress(b.id, reloadStatus: _selectedStatus);
+                    if (!mounted) return;
+                    await closeSheet();
+                  }
+                : null,
 
-          onCancel: (b.status == "confirmed" || b.status == "in_progress")
-              ? (reason) async {
-                  await controller.updateBookingStatus(
-                    b.id,
-                    statusValue: "cancelled",
-                    reason: reason,
-                    reloadStatus: _selectedStatus,
-                  );
-                  if (mounted) Navigator.pop(context);
-                }
-              : null,
-        ),
-      ),
+            onRequestPayment: (b.status == "in_progress")
+                ? (priceText, reason) async {
+                    final price = _parseNum(priceText);
+                    if (price <= 0) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Enter a valid price.")),
+                      );
+                      return;
+                    }
+
+                    await controller.requestPayment(
+                      b.id,
+                      price: price,
+                      reason: (reason ?? "").trim().isEmpty ? null : reason!.trim(),
+                      reloadStatus: _selectedStatus,
+                    );
+
+                    if (!mounted) return;
+                    await closeSheet();
+                  }
+                : null,
+
+            onMarkCompleted: (b.status == "awaiting_payment_confirmation" || b.status == "in_progress")
+                ? () async {
+                    await controller.markCompleted(b.id, reloadStatus: _selectedStatus);
+
+                    if (!mounted) return;
+                    await closeSheet();
+                    await _openRatingSheet(
+                      bookingId: b.id,
+                      title: "Rate your client",
+                      subtitle: "How was the experience with this client?",
+                    );
+                  }
+                : null,
+
+            onCancel: (b.status == "confirmed" || b.status == "in_progress" || b.status == "pending")
+                ? (reason) async {
+                    await controller.cancelBooking(
+                      b.id,
+                      reason: (reason ?? "").trim().isEmpty ? null : reason!.trim(),
+                      reloadStatus: _selectedStatus,
+                    );
+
+                    if (!mounted) return;
+                    await closeSheet();
+                  }
+                : null,
+          ),
+        );
+      },
     );
   }
 
@@ -270,7 +319,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                         ),
                         SizedBox(height: 6),
                         Text(
-                          "Accept requests, update status, and complete jobs.\nWhen completed, rating request will go to both sides.",
+                          "Accept requests, mark in progress, request payment, and cancel if needed.",
                           style: TextStyle(
                             color: Color(0xFFE5E7EB),
                             fontWeight: FontWeight.w700,
