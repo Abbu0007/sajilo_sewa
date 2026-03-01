@@ -93,4 +93,19 @@ class DashboardRemoteDataSource {
     }
     return BookingApiModel.fromJson(Map<String, dynamic>.from(bookingJson));
   }
+  Future<void> cancelBooking(String bookingId, {String? reason}) async {
+  await _dio.patch(
+    "/api/bookings/$bookingId/cancel",
+    data: {
+      if (reason != null) "reason": reason,
+    },
+  );
+  }
+
+Future<void> confirmPayment(String bookingId) async {
+  await _dio.patch(
+    "/api/bookings/$bookingId/confirm-payment",
+    data: {"confirm": true},
+  );
+  }
 }

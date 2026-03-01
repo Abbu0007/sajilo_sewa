@@ -1,24 +1,28 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:sajilo_sewa/core/api/api_endpoints.dart';
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/dashboard/data/models/profile_api_model.dart';
+import 'package:sajilo_sewa/features/dashboard/data/models/profile_stats_api_model.dart';
 
 abstract class IProfileRemoteDataSource {
   Future<ProfileApiModel> getMe();
+
   Future<ProfileApiModel> updateMe({
     required String firstName,
     required String lastName,
     required String phone,
-    String? email, // optional if your backend allows
+    String? email, 
   });
 
   Future<ProfileApiModel> uploadAvatar({
     required File file,
   });
+
+  // ✅ ADD
+  Future<ProfileStatsApiModel> getClientProfileStats();
 }
 
 class ProfileRemoteDataSource implements IProfileRemoteDataSource {
@@ -30,8 +34,6 @@ class ProfileRemoteDataSource implements IProfileRemoteDataSource {
   Future<ProfileApiModel> getMe() async {
     try {
       final res = await _dio.get(ApiEndpoints.me);
-
-      // Your backend returns { message, user: {...} }
       final data = res.data as Map<String, dynamic>;
       final userJson = (data['user'] ?? data) as Map<String, dynamic>;
 
@@ -99,6 +101,22 @@ class ProfileRemoteDataSource implements IProfileRemoteDataSource {
       final userJson = (data['user'] ?? data) as Map<String, dynamic>;
 
       return ProfileApiModel.fromJson(userJson);
+    } on DioException catch (e) {
+      throw ServerFailure(message: _dioMessage(e));
+    } catch (e) {
+      throw ServerFailure(message: e.toString());
+    }
+  }
+
+  @override
+  Future<ProfileStatsApiModel> getClientProfileStats() async {
+    try {
+      final res = await _dio.get(ApiEndpoints.clientMeProfile);
+
+      final data = res.data as Map<String, dynamic>;
+      final profileJson = (data['profile'] ?? {}) as Map<String, dynamic>;
+
+      return ProfileStatsApiModel.fromJson(profileJson);
     } on DioException catch (e) {
       throw ServerFailure(message: _dioMessage(e));
     } catch (e) {
