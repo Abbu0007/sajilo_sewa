@@ -5,7 +5,6 @@ import '../../domain/entities/provider_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/repositories/i_dashboard_repository.dart';
 
-
 class DashboardRepositoryImpl implements IDashboardRepository {
   final DashboardRemoteDataSource remote;
 
@@ -40,6 +39,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               avatarUrl: m.avatarUrl,
               avgRating: m.avgRating,
               ratingCount: m.ratingCount,
+              completedJobs: m.completedJobs,
+              startingPrice: m.startingPrice,
             ))
         .toList();
   }
@@ -59,6 +60,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               avatarUrl: m.avatarUrl,
               avgRating: m.avgRating,
               ratingCount: m.ratingCount,
+              completedJobs: m.completedJobs,
+              startingPrice: m.startingPrice,
             ))
         .toList();
   }
@@ -78,6 +81,8 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               avatarUrl: m.avatarUrl,
               avgRating: m.avgRating,
               ratingCount: m.ratingCount,
+              completedJobs: m.completedJobs,
+              startingPrice: m.startingPrice,
             ))
         .toList();
   }
@@ -90,6 +95,7 @@ class DashboardRepositoryImpl implements IDashboardRepository {
   @override
   Future<List<BookingEntity>> getMyBookings({String status = "all"}) async {
     final models = await remote.getMyBookings(status: status);
+
     return models.map((m) {
       return BookingEntity(
         id: m.id,
@@ -110,6 +116,10 @@ class DashboardRepositoryImpl implements IDashboardRepository {
                 profession: m.provider!.profession,
                 serviceSlug: m.provider!.serviceSlug,
                 avatarUrl: m.provider!.avatarUrl,
+                avgRating: m.provider!.avgRating,
+                ratingCount: m.provider!.ratingCount,
+                completedJobs: m.provider!.completedJobs,
+                startingPrice: m.provider!.startingPrice,
               ),
         service: m.service == null
             ? null
@@ -159,6 +169,10 @@ class DashboardRepositoryImpl implements IDashboardRepository {
               profession: model.provider!.profession,
               serviceSlug: model.provider!.serviceSlug,
               avatarUrl: model.provider!.avatarUrl,
+              avgRating: model.provider!.avgRating,
+              ratingCount: model.provider!.ratingCount,
+              completedJobs: model.provider!.completedJobs,
+              startingPrice: model.provider!.startingPrice,
             ),
       service: model.service == null
           ? null
@@ -174,36 +188,44 @@ class DashboardRepositoryImpl implements IDashboardRepository {
 
   @override
   Future<List<NotificationEntity>> getNotifications() async {
-  final models = await remote.getNotifications();
-  return models
-      .map((m) => NotificationEntity(
-            id: m.id,
-            title: m.title ?? "Notification",
-            message: m.message ?? "",
-            createdAt: m.createdAt,
-            isRead: m.isRead,
-            type: m.type,
-            bookingId: m.bookingId,
-            meta: m.meta,
-          ))
-      .toList();
+    final models = await remote.getNotifications();
+    return models
+        .map((m) => NotificationEntity(
+              id: m.id,
+              title: m.title ?? "Notification",
+              message: m.message ?? "",
+              createdAt: m.createdAt,
+              isRead: m.isRead,
+              type: m.type,
+              bookingId: m.bookingId,
+              meta: m.meta,
+            ))
+        .toList();
   }
 
   @override
   Future<void> createRating({
-  required String bookingId,
-  required int stars,
-  String? comment,
+    required String bookingId,
+    required int stars,
+    String? comment,
   }) {
-  return remote.createRating(
-    bookingId: bookingId,
-    stars: stars,
-    comment: comment,
-  );
+    return remote.createRating(
+      bookingId: bookingId,
+      stars: stars,
+      comment: comment,
+    );
   }
 
   @override
   Future<void> markNotificationRead(String id) {
-  return remote.markNotificationRead(id);
+    return remote.markNotificationRead(id);
+  }
+
+  Future<void> cancelBooking(String bookingId, {String? reason}) {
+  return remote.cancelBooking(bookingId, reason: reason);
+  }
+
+  Future<void> confirmPayment(String bookingId) {
+  return remote.confirmPayment(bookingId);
   }
 }

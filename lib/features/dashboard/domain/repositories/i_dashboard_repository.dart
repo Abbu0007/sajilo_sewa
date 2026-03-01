@@ -15,6 +15,9 @@ abstract class IDashboardRepository {
   Future<List<NotificationEntity>> getNotifications();
   Future<void> markNotificationRead(String id);
 
+  Future<void> cancelBooking(String bookingId, {String? reason});
+  Future<void> confirmPayment(String bookingId);
+
   Future<void> createRating({
   required String bookingId,
   required int stars,
