@@ -1,7 +1,5 @@
-
 import 'package:sajilo_sewa/features/provider_dashboard/domain/entities/provider_booking_entity.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/domain/entities/provider_notification_entity.dart';
-
 import '../../domain/entities/provider_me_entity.dart';
 import '../../domain/entities/provider_profile_entity.dart';
 import '../../domain/repositories/i_provider_repository.dart';
@@ -12,9 +10,7 @@ class ProviderRepositoryImpl implements IProviderRepository {
 
   ProviderRepositoryImpl({required this.remote});
 
-  @override
-  Future<ProviderMeEntity> getMe() async {
-    final m = await remote.getMe();
+  ProviderMeEntity _mapMe(dynamic m) {
     return ProviderMeEntity(
       id: m.id,
       firstName: m.firstName,
@@ -23,9 +19,16 @@ class ProviderRepositoryImpl implements IProviderRepository {
       phone: m.phone,
       avatarUrl: m.avatarUrl,
       role: m.role,
+      profession: m.profession,
       avgRating: m.avgRating,
       ratingCount: m.ratingCount,
     );
+  }
+
+  @override
+  Future<ProviderMeEntity> getMe() async {
+    final m = await remote.getMe();
+    return _mapMe(m);
   }
 
   @override
@@ -126,25 +129,25 @@ class ProviderRepositoryImpl implements IProviderRepository {
     String bookingId, {
     required String status,
     String? reason,
+    num? price,
   }) async {
-    final b = await remote.updateBookingStatus(bookingId, status: status, reason: reason);
+    final b = await remote.updateBookingStatus(bookingId, status: status, reason: reason,price: price);
     return _mapBooking(b);
+  }
+
+  @override
+  Future<ProviderMeEntity> updateMe({
+    required String firstName,
+    required String lastName,
+  }) async {
+    final model = await remote.updateMe(firstName: firstName, lastName: lastName);
+    return _mapMe(model);
   }
 
   @override
   Future<ProviderMeEntity> uploadAvatar(String filePath) async {
     final m = await remote.uploadAvatar(filePath);
-    return ProviderMeEntity(
-      id: m.id,
-      firstName: m.firstName,
-      lastName: m.lastName,
-      email: m.email,
-      phone: m.phone,
-      avatarUrl: m.avatarUrl,
-      role: m.role,
-      avgRating: m.avgRating,
-      ratingCount: m.ratingCount,
-    );
+    return _mapMe(m);
   }
 
   ProviderBookingEntity _mapBooking(dynamic b) {
@@ -178,32 +181,31 @@ class ProviderRepositoryImpl implements IProviderRepository {
 
   @override
   Future<List<ProviderNotificationEntity>> getNotifications() async {
-  final models = await remote.getNotifications();
-  return models
-      .map((m) => ProviderNotificationEntity(
-            id: m.id,
-            title: (m.title ?? "Notification"),
-            message: (m.message ?? ""),
-            createdAt: m.createdAt,
-            isRead: m.isRead, 
-            type: m.type, 
-            bookingId: m.bookingId,
-          ))
-      .toList();
+    final models = await remote.getNotifications();
+    return models
+        .map((m) => ProviderNotificationEntity(
+              id: m.id,
+              title: (m.title ?? "Notification"),
+              message: (m.message ?? ""),
+              createdAt: m.createdAt,
+              isRead: m.isRead,
+              type: m.type,
+              bookingId: m.bookingId,
+            ))
+        .toList();
   }
 
   @override
   Future<void> markNotificationRead(String id) {
-  return remote.markNotificationRead(id);
+    return remote.markNotificationRead(id);
   }
 
   @override
   Future<void> createRating({
-  required String bookingId,
-  required int stars,
-  String? comment,
+    required String bookingId,
+    required int stars,
+    String? comment,
   }) {
-  return remote.createRating(bookingId: bookingId, stars: stars, comment: comment);
+    return remote.createRating(bookingId: bookingId, stars: stars, comment: comment);
   }
-
 }

@@ -23,7 +23,12 @@ abstract class IProviderRepository {
     String bookingId, {
     required String status,
     String? reason,
+    num? price,
   });
+  Future<ProviderMeEntity> updateMe({
+  required String firstName,
+  required String lastName,
+});
 
   Future<ProviderMeEntity> uploadAvatar(String filePath);
   Future<List<ProviderNotificationEntity>> getNotifications();

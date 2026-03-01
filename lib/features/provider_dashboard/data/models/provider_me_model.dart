@@ -6,6 +6,7 @@ class ProviderMeApiModel {
   final String? phone;
   final String? avatarUrl;
   final String? role;
+  final String? profession;
   final num? avgRating;
   final num? ratingCount;
 
@@ -17,6 +18,7 @@ class ProviderMeApiModel {
     this.phone,
     this.avatarUrl,
     this.role,
+    this.profession,
     this.avgRating,
     this.ratingCount,
   });
@@ -27,10 +29,7 @@ class ProviderMeApiModel {
       return s.isEmpty ? null : s;
     }
 
-    num? numSafe(dynamic v) {
-      if (v is num) return v;
-      return null;
-    }
+    num? numSafe(dynamic v) => (v is num) ? v : null;
 
     return ProviderMeApiModel(
       id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
@@ -40,6 +39,7 @@ class ProviderMeApiModel {
       phone: norm(json['phone']?.toString()),
       avatarUrl: norm(json['avatarUrl']?.toString()),
       role: norm(json['role']?.toString()),
+      profession: norm(json['profession']?.toString()),
       avgRating: numSafe(json['avgRating']),
       ratingCount: numSafe(json['ratingCount']),
     );

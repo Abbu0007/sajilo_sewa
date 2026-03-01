@@ -6,6 +6,7 @@ class ProviderMeEntity {
   final String? phone;
   final String? avatarUrl;
   final String? role;
+  final String? profession;
   final num? avgRating;
   final num? ratingCount;
 
@@ -17,6 +18,7 @@ class ProviderMeEntity {
     this.phone,
     this.avatarUrl,
     this.role,
+    this.profession,
     this.avgRating,
     this.ratingCount,
   });

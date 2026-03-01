@@ -11,15 +11,35 @@ class ProviderRemoteDataSource {
 
   ProviderRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance.dio;
 
-  // -------- ME (User) --------
   Future<ProviderMeApiModel> getMe() async {
     final res = await _dio.get(ApiEndpoints.me);
     final data = (res.data is Map) ? Map<String, dynamic>.from(res.data) : <String, dynamic>{};
-
-    // backend might return {user: {...}} or directly user fields
     final userJson = data['user'] is Map ? Map<String, dynamic>.from(data['user']) : data;
     return ProviderMeApiModel.fromJson(userJson);
   }
+
+  Future<ProviderBookingApiModel> updateBookingStatus(
+  String bookingId, {
+  required String status, 
+  String? reason,
+  num? price,
+}) async {
+  final payload = <String, dynamic>{
+    "status": status,
+    if (reason != null && reason.trim().isNotEmpty) "reason": reason.trim(),
+    if (price != null) "price": price,
+  };
+
+  final res = await _dio.patch(
+    ApiEndpoints.providerBookingUpdateStatus(bookingId),
+    data: payload,
+  );
+
+  final bookingJson = res.data?['booking'];
+  if (bookingJson is! Map) throw Exception("Invalid booking response");
+
+  return ProviderBookingApiModel.fromJson(Map<String, dynamic>.from(bookingJson));
+}
 
   
   Future<ProviderProfileApiModel?> getMyProviderProfile() async {
@@ -36,7 +56,7 @@ class ProviderRemoteDataSource {
     String? bio,
     num? startingPrice,
     List<String>? serviceAreas,
-    String? availability, // available | busy | offline
+    String? availability, 
   }) async {
     final payload = <String, dynamic>{
       "profession": profession,
@@ -56,7 +76,6 @@ class ProviderRemoteDataSource {
     return ProviderProfileApiModel.fromJson(Map<String, dynamic>.from(profileJson));
   }
 
-  // -------- Provider Bookings --------
   Future<List<ProviderBookingApiModel>> getProviderBookings({String status = "all"}) async {
     final res = await _dio.get(ApiEndpoints.providerBookingsMine(status: status));
     final items = (res.data?['items'] as List? ?? []).cast<dynamic>();
@@ -83,23 +102,6 @@ class ProviderRemoteDataSource {
     return ProviderBookingApiModel.fromJson(Map<String, dynamic>.from(bookingJson));
   }
 
-  Future<ProviderBookingApiModel> updateBookingStatus(
-    String bookingId, {
-    required String status, // in_progress | completed | cancelled
-    String? reason,
-  }) async {
-    final payload = <String, dynamic>{
-      "status": status,
-      if (reason != null && reason.trim().isNotEmpty) "reason": reason.trim(),
-    };
-
-    final res = await _dio.patch(ApiEndpoints.providerBookingUpdateStatus(bookingId), data: payload);
-    final bookingJson = res.data?['booking'];
-    if (bookingJson is! Map) throw Exception("Invalid booking response");
-    return ProviderBookingApiModel.fromJson(Map<String, dynamic>.from(bookingJson));
-  }
-
-  // -------- Notifications --------
   Future<List<ProviderNotificationApiModel>> getNotifications() async {
     final res = await _dio.get(ApiEndpoints.notifications);
     final items = (res.data?['items'] as List? ?? []).cast<dynamic>();
@@ -127,7 +129,23 @@ class ProviderRemoteDataSource {
   await _dio.post(ApiEndpoints.ratings, data: payload);
   }
 
-  // -------- Avatar --------
+  Future<ProviderMeApiModel> updateMe({
+  required String firstName,
+  required String lastName,
+  }) async {
+  final payload = {
+    "firstName": firstName,
+    "lastName": lastName,
+  };
+
+  final res = await _dio.patch(ApiEndpoints.updateMe, data: payload);
+  final data = (res.data is Map) ? Map<String, dynamic>.from(res.data) : <String, dynamic>{};
+  final userJson = data['user'] is Map ? Map<String, dynamic>.from(data['user']) : data;
+
+  return ProviderMeApiModel.fromJson(userJson);
+  }
+
+  
   Future<ProviderMeApiModel> uploadAvatar(String filePath) async {
     final formData = FormData.fromMap({
       "avatar": await MultipartFile.fromFile(filePath),
