@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
+
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
 import '../../domain/usecases/get_providers_by_service_usecase.dart';
-import '../../domain/usecases/toggle_favourite_usecase.dart';
+import '../view_model/favourites_controller.dart';
 import '../view_model/service_providers_controller.dart';
+
 import '../widgets/service/booking_sheet.dart';
 import '../widgets/service/provider_card.dart';
 import '../widgets/service/provider_details_sheet.dart';
 
 class ServiceProvidersScreen extends StatefulWidget {
+  final DashboardRepositoryImpl repo;
+  final FavouritesController favController;
+  final CreateBookingUseCase createBooking;
+
   final String slug;
   final String title;
   final String serviceId;
 
   const ServiceProvidersScreen({
     super.key,
+    required this.repo,
+    required this.favController,
+    required this.createBooking,
     required this.slug,
     required this.title,
     required this.serviceId,
@@ -27,25 +35,24 @@ class ServiceProvidersScreen extends StatefulWidget {
 
 class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
   late final ServiceProvidersController controller;
-  late final CreateBookingUseCase createBooking;
+
+  DashboardRepositoryImpl get repo => widget.repo;
+  FavouritesController get favController => widget.favController;
+  CreateBookingUseCase get createBooking => widget.createBooking;
 
   @override
   void initState() {
     super.initState();
 
-    final repo = DashboardRepositoryImpl(
-      remote: DashboardRemoteDataSource(),
-    );
-
     controller = ServiceProvidersController(
-      getProviders: GetProvidersByServiceUseCase(repo),
-      toggleFavourite: ToggleFavouriteUseCase(repo),
+    getProviders: GetProvidersByServiceUseCase(repo),
     );
 
-    createBooking = CreateBookingUseCase(repo);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.load(widget.slug);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await controller.load(widget.slug);
+      if (favController.favIds.isEmpty) {
+        await favController.load();
+      }
     });
   }
 
@@ -94,8 +101,10 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
         heightFactor: 0.62,
         child: ProviderDetailsSheet(
           provider: provider,
-          isFavourite: controller.isFavourite(provider.id),
-          onToggleFavourite: () => controller.toggle(provider.id),
+          isFavourite: favController.isFavourite(provider.id),
+          onToggleFavourite: () async {
+            await favController.toggle(provider.id);
+          },
           onBook: () {
             Navigator.pop(context);
             _openBookingSheet(providerId: provider.id);
@@ -108,7 +117,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: controller,
+      animation: Listenable.merge([controller, favController]),
       builder: (_, __) {
         return Scaffold(
           appBar: AppBar(
@@ -125,10 +134,10 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
                           children: controller.providers.map((p) {
                             return ProviderCard(
                               provider: p,
-                              isFavourite: controller.isFavourite(p.id),
-                              onFavourite: () => controller.toggle(p.id),
-
-                              onViewDetails: () => _openProviderDetailsSheet(provider: p),
+                              isFavourite: favController.isFavourite(p.id),
+                              onFavourite: () => favController.toggle(p.id),
+                              onViewDetails: () =>
+                                  _openProviderDetailsSheet(provider: p),
                               onBookNow: () => _openBookingSheet(providerId: p.id),
                             );
                           }).toList(),

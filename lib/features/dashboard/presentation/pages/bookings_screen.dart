@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/bookings/booking_details_sheet.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/usecases/get_my_bookings_usecase.dart';
+import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/usecases/confirm_payment_usecase.dart';
 import '../view_model/bookings_controller.dart';
+
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -14,12 +18,27 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   late final BookingsController controller;
 
+  static const statuses = <String>[
+    "all",
+    "pending",
+    "confirmed",
+    "in_progress",
+    "awaiting_payment_confirmation",
+    "completed",
+    "cancelled",
+  ];
+
   @override
   void initState() {
     super.initState();
 
     final repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
-    controller = BookingsController(getMyBookings: GetMyBookingsUseCase(repo));
+
+    controller = BookingsController(
+      getMyBookings: GetMyBookingsUseCase(repo),
+      cancelBooking: CancelBookingUseCase(repo),
+      confirmPayment: ConfirmPaymentUseCase(repo),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.load(newStatus: "all");
@@ -40,7 +59,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       final d = dt.day.toString().padLeft(2, '0');
       final hh = dt.hour.toString().padLeft(2, '0');
       final mm = dt.minute.toString().padLeft(2, '0');
-      return "$y-$m-$d  $hh:$mm";
+      return "$d/$m/$y, $hh:$mm";
     } catch (_) {
       return iso;
     }
@@ -48,22 +67,47 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   Color _statusBg(String status) {
     final s = status.trim().toLowerCase();
-    if (s == "pending") return const Color(0xFFFEF3C7); 
-    if (s == "accepted") return const Color(0xFFDBEAFE); 
-    if (s == "completed") return const Color(0xFFD1FAE5); 
-    if (s == "cancelled" || s == "canceled") return const Color(0xFFFEE2E2); 
-    if (s == "rejected") return const Color(0xFFFEE2E2);
-    return const Color(0xFFF3F4F6); // gray-100
+    if (s == "pending") return const Color(0xFFFEF3C7);
+    if (s == "confirmed") return const Color(0xFFDBEAFE);
+    if (s == "in_progress") return const Color(0xFFE0E7FF);
+    if (s == "awaiting_payment_confirmation") return const Color(0xFFFFEDD5);
+    if (s == "completed") return const Color(0xFFD1FAE5);
+    if (s == "cancelled") return const Color(0xFFFEE2E2);
+    return const Color(0xFFF3F4F6);
   }
 
   Color _statusText(String status) {
     final s = status.trim().toLowerCase();
-    if (s == "pending") return const Color(0xFF92400E); 
-    if (s == "accepted") return const Color(0xFF1D4ED8); 
-    if (s == "completed") return const Color(0xFF047857); 
-    if (s == "cancelled" || s == "canceled") return const Color(0xFFB91C1C); 
-    if (s == "rejected") return const Color(0xFFB91C1C);
-    return const Color(0xFF334155); // slate-700
+    if (s == "pending") return const Color(0xFF92400E);
+    if (s == "confirmed") return const Color(0xFF1D4ED8);
+    if (s == "in_progress") return const Color(0xFF3730A3);
+    if (s == "awaiting_payment_confirmation") return const Color(0xFF9A3412);
+    if (s == "completed") return const Color(0xFF047857);
+    if (s == "cancelled") return const Color(0xFFB91C1C);
+    return const Color(0xFF334155);
+  }
+
+  Future<void> _openDetails(dynamic booking) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.78,
+        child: BookingDetailsSheet(
+          booking: booking,
+          onCancel: (bookingId, reason) async {
+            await controller.doCancel(bookingId, reason: reason);
+          },
+          onConfirmPayment: (bookingId) async {
+            await controller.doConfirmPayment(bookingId);
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -91,18 +135,59 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              "Track all your service bookings.",
+                              "Track bookings by status.",
                               style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
                       ),
-                      _StatusDropdown(
-                        value: controller.status,
-                        onChanged: (v) => controller.load(newStatus: v),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          color: const Color(0xFFF8FAFC),
+                        ),
+                        child: Text(
+                          "Total: ${controller.items.length}",
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 14),
+
+                  // ✅ Tabs like website
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: statuses.map((s) {
+                        final selected = controller.status == s;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(
+                              s.replaceAll("_", " "),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: selected ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            selected: selected,
+                            onSelected: (_) => controller.load(newStatus: s),
+                            selectedColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
                   const SizedBox(height: 14),
 
                   if (controller.loading)
@@ -114,8 +199,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     _ErrorBox(message: controller.error!, onRetry: controller.load)
                   else if (controller.items.isEmpty)
                     const _EmptyBox(
-                      title: "No bookings yet",
-                      subtitle: "Book a provider from Home or Services.",
+                      title: "No bookings found",
+                      subtitle: "Try another status tab or book a provider from Home.",
                     )
                   else
                     ...controller.items.map((b) {
@@ -123,71 +208,82 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       final providerName = b.provider?.fullName ?? "Provider";
                       final status = (b.status.isEmpty ? "unknown" : b.status);
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          color: Colors.white,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x140F172A),
-                              blurRadius: 18,
-                              offset: Offset(0, 10),
-                            )
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    "$serviceName  •  $providerName",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                      color: Color(0xFF0F172A),
+                      return InkWell(
+                        onTap: () => _openDetails(b),
+                        borderRadius: BorderRadius.circular(18),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            color: Colors.white,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x140F172A),
+                                blurRadius: 18,
+                                offset: Offset(0, 10),
+                              )
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "$serviceName  •  $providerName",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                        color: Color(0xFF0F172A),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: _statusBg(status),
-                                    borderRadius: BorderRadius.circular(99),
-                                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                                  ),
-                                  child: Text(
-                                    status,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 11,
-                                      color: _statusText(status),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: _statusBg(status),
+                                      borderRadius: BorderRadius.circular(99),
+                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                    ),
+                                    child: Text(
+                                      status.replaceAll("_", " "),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 11,
+                                        color: _statusText(status),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
 
-                            _InfoRow(
-                              label: "When:",
-                              value: _formatDate(b.scheduledAt),
-                            ),
-                            if ((b.addressText ?? "").trim().isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              _InfoRow(label: "Address:", value: b.addressText!.trim()),
+                              _InfoRow(label: "When:", value: _formatDate(b.scheduledAt)),
+                              if ((b.addressText ?? "").trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                _InfoRow(label: "Address:", value: b.addressText!.trim()),
+                              ],
+                              if ((b.note ?? "").trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                _InfoRow(label: "Note:", value: b.note!.trim()),
+                              ],
+
+                              const SizedBox(height: 10),
+                              Text(
+                                "Tap to view details",
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ],
-                            if ((b.note ?? "").trim().isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              _InfoRow(label: "Note:", value: b.note!.trim()),
-                            ],
-                          ],
+                          ),
                         ),
                       );
                     }).toList(),
@@ -202,54 +298,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
 }
 
 /// ---- widgets ----
-
-class _StatusDropdown extends StatelessWidget {
-  final String value;
-  final ValueChanged<String> onChanged;
-
-  const _StatusDropdown({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final items = const <String>[
-      "all",
-      "pending",
-      "accepted",
-      "completed",
-      "cancelled",
-      "rejected",
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFFF8FAFC),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : "all",
-          borderRadius: BorderRadius.circular(14),
-          items: items
-              .map(
-                (s) => DropdownMenuItem(
-                  value: s,
-                  child: Text(
-                    s,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
-        ),
-      ),
-    );
-  }
-}
 
 class _InfoRow extends StatelessWidget {
   final String label;

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
+import 'package:sajilo_sewa/features/dashboard/data/models/profile_stats_api_model.dart';
+import 'package:sajilo_sewa/features/dashboard/data/repositories/profile_repository_impl.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_view_model.dart';
+
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/profile_logout_button.dart';
 import '../widgets/profile/profile_section_title.dart';
@@ -20,12 +23,21 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _darkMode = false;
 
+  // ✅ keep stats future so it doesn't refetch on every rebuild
+  Future<dynamic>? _statsFuture;
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       ref.read(profileViewModelProvider.notifier).loadProfile();
+      _refreshStats();
     });
+  }
+
+  void _refreshStats() {
+    final repo = ref.read(profileRepositoryProvider);
+    _statsFuture = repo.getClientProfileStats();
   }
 
   Future<void> _logout() async {
@@ -95,17 +107,70 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () => ref.read(profileViewModelProvider.notifier).loadProfile(),
+                onRefresh: () async {
+                  await ref.read(profileViewModelProvider.notifier).loadProfile();
+                  setState(() {
+                    _refreshStats(); // ✅ also refetch stats
+                  });
+                },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
                   child: Column(
                     children: [
-                      const ProfileStatsRow(
-                        bookings: "12",
-                        favourites: "8",
-                        rating: "4.8",
+                      // ✅ STATS ROW (REAL)
+                      FutureBuilder(
+                        future: _statsFuture,
+                        builder: (context, snap) {
+                          // loading
+                          if (snap.connectionState == ConnectionState.waiting) {
+                            return const ProfileStatsRow(
+                              completedBookings: "…",
+                              rating: "…",
+                              totalReviews: "…",
+                            );
+                          }
+
+                          // no data at all
+                          if (!snap.hasData) {
+                            return const ProfileStatsRow(
+                              completedBookings: "0",
+                              rating: "0.0",
+                              totalReviews: "0",
+                            );
+                          }
+
+                          final either = snap.data;
+
+                          // your repo returns Either<Failure, ProfileStatsApiModel>
+                          return (either as dynamic).fold(
+                            (l) => Column(
+                              children: [
+                                const ProfileStatsRow(
+                                  completedBookings: "0",
+                                  rating: "0.0",
+                                  totalReviews: "0",
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l.message?.toString() ?? "Failed to load stats",
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                            (ProfileStatsApiModel stats) => ProfileStatsRow(
+                              completedBookings: stats.completedBookings.toString(),
+                              rating: stats.ratingAvg.toStringAsFixed(1),
+                              totalReviews: stats.ratingCount.toString(),
+                            ),
+                          );
+                        },
                       ),
+
                       const SizedBox(height: 18),
 
                       const ProfileSectionTitle(title: "Account Settings"),
@@ -116,11 +181,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         iconColor: const Color(0xFF5B4FFF),
                         title: "Edit Profile",
                         onTap: () async {
-                          final result = await Navigator.pushNamed(context, AppRoutes.editProfile);
+                          final result =
+                              await Navigator.pushNamed(context, AppRoutes.editProfile);
                           if (result == true) {
                             ref.read(profileViewModelProvider.notifier).loadProfile();
-                            }
-                            },
+                            setState(() {
+                              _refreshStats();
+                            });
+                          }
+                        },
                       ),
 
                       const SizedBox(height: 10),

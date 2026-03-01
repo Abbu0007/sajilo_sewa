@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
+import 'package:sajilo_sewa/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/create_booking_usecase.dart';
 import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_service_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_top_rated_providers_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_notifications_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/mark_notification_read_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/create_rating_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/view_model/favourites_controller.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/widgets/home/notifications_sheet.dart';
-
-import '../../data/repositories/dashboard_repository_impl.dart';
-import '../../domain/usecases/get_notifications_usecase.dart';
-import '../../domain/usecases/get_top_rated_providers_usecase.dart';
-import '../../domain/usecases/mark_notification_read_usecase.dart';
-import '../../domain/usecases/create_rating_usecase.dart'; // ✅ NEW
-
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/service/booking_sheet.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/service/provider_details_sheet.dart';
 import '../view_model/dashboard_home_controller.dart';
 import '../view_model/home_notifications_controller.dart';
-
 import '../widgets/home/home_header.dart';
 import '../widgets/home/home_promo_card.dart';
 import '../widgets/home/home_search_box.dart';
@@ -20,26 +20,35 @@ import '../widgets/home/home_service_tile.dart';
 import '../widgets/home/home_services_grid.dart';
 import '../widgets/home/home_provider_row.dart';
 import '../widgets/home/home_state_boxes.dart';
-
 import 'service_providers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final DashboardRepositoryImpl repo;
+  final FavouritesController favController;
+  final CreateBookingUseCase createBooking;
+
+  const HomeScreen({
+    super.key,
+    required this.repo,
+    required this.favController,
+    required this.createBooking,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final DashboardRepositoryImpl repo; // ✅ keep single repo instance
   late final DashboardHomeController homeController;
   late final HomeNotificationsController notifController;
+
+  DashboardRepositoryImpl get repo => widget.repo;
+  FavouritesController get favController => widget.favController;
+  CreateBookingUseCase get createBooking => widget.createBooking;
 
   @override
   void initState() {
     super.initState();
-
-    repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
 
     homeController = DashboardHomeController(
       getServices: GetServicesUseCase(repo),
@@ -49,12 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
     notifController = HomeNotificationsController(
       getNotifications: GetNotificationsUseCase(repo),
       markRead: MarkNotificationReadUseCase(repo),
-      createRating: CreateRatingUseCase(repo), // ✅ NEW
+      createRating: CreateRatingUseCase(repo),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await homeController.load();
-      // preload notifications so badge is correct
       await notifController.load();
     });
   }
@@ -66,8 +74,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  String? _serviceIdFromSlug(String slug) {
+    final s = slug.trim().toLowerCase();
+    for (final svc in homeController.services) {
+      if ((svc.slug ?? "").trim().toLowerCase() == s) return svc.id;
+    }
+    return null;
+  }
+
   Future<void> _openNotifications() async {
-    // refresh when opened
     await notifController.load();
     if (!mounted) return;
 
@@ -84,16 +99,75 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    // ✅ After closing sheet, refresh home so Top Rated updates after ratings
     if (!mounted) return;
     await homeController.load();
-    await notifController.load(); // keeps badge accurate
+    await notifController.load();
+  }
+
+  Future<void> _openBookingSheet({
+    required String providerId,
+    required String serviceId,
+  }) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.75,
+        child: BookingSheet(
+          onConfirm: (scheduledAt, address, note) async {
+            await createBooking(
+              providerId: providerId,
+              serviceId: serviceId,
+              scheduledAt: scheduledAt,
+              addressText: address,
+              note: note,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openProviderDetails(dynamic p) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.62,
+        child: ProviderDetailsSheet(
+          provider: p,
+          isFavourite: favController.isFavourite(p.id),
+          onToggleFavourite: () async {
+            await favController.toggle(p.id);
+          },
+          onBook: () async {
+            final serviceId = _serviceIdFromSlug(p.serviceSlug ?? "");
+            if (serviceId == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Service not found for this provider.")),
+              );
+              return;
+            }
+            Navigator.pop(context);
+            await _openBookingSheet(providerId: p.id, serviceId: serviceId);
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([homeController, notifController]),
+      animation: Listenable.merge([homeController, notifController, favController]),
       builder: (context, _) {
         return Scaffold(
           backgroundColor: Colors.white,
@@ -102,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: () async {
                 await homeController.load();
                 await notifController.load();
+                await favController.load();
               },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
@@ -116,9 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   HomeSearchBox(
                     hint: "Search for services...",
-                    onChanged: (v) {
-                      // later: connect search
-                    },
+                    onChanged: (_) {},
                   ),
                   const SizedBox(height: 14),
 
@@ -126,18 +199,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: "Get 20% Off",
                     subtitle: "On your first service booking",
                     buttonText: "Book Now",
-                    onTap: () {
-                      // later: scroll to services or open all services
-                    },
+                    onTap: () {},
                   ),
                   const SizedBox(height: 18),
 
                   HomeSectionHeader(
                     title: "All Services",
                     actionText: "View All",
-                    onAction: () {
-                      // later: open all services screen
-                    },
+                    onAction: () {},
                   ),
                   const SizedBox(height: 12),
 
@@ -159,6 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => ServiceProvidersScreen(
+                                  repo: repo,
+                                  favController: favController,
+                                  createBooking: createBooking,
                                   slug: s.slug,
                                   title: s.name,
                                   serviceId: s.id,
@@ -175,9 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   HomeSectionHeader(
                     title: "Top Rated Providers",
                     actionText: "View All",
-                    onAction: () {
-                    
-                    },
+                    onAction: () {},
                   ),
                   const SizedBox(height: 12),
 
@@ -192,11 +262,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: homeController.topRated.map((p) {
                         return HomeProviderRow(
                           name: p.fullName,
-                          profession: p.profession ?? "Professional",
+                          profession: p.profession,
                           avatarUrl: p.avatarUrl,
-                          onTap: () {
-                            // next step: provider details + booking bottom sheets
-                          },
+                          avgRating: p.avgRating,
+                          ratingCount: p.ratingCount,
+                          completedJobs: p.completedJobs,
+                          startingPrice: p.startingPrice,
+                          onTap: () => _openProviderDetails(p),
                         );
                       }).toList(),
                     ),

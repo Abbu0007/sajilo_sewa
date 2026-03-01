@@ -1,50 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
-import 'package:sajilo_sewa/features/dashboard/domain/usecases/get_service_usecase.dart';
-import '../../data/repositories/dashboard_repository_impl.dart';
-import '../../domain/usecases/create_booking_usecase.dart';
-import '../../domain/usecases/get_favourites_usecase.dart';
-import '../../domain/usecases/toggle_favourite_usecase.dart';
+import 'package:sajilo_sewa/features/dashboard/domain/usecases/create_booking_usecase.dart';
 import '../view_model/favourites_controller.dart';
 import '../widgets/service/provider_card.dart';
 import '../widgets/service/provider_details_sheet.dart';
 import '../widgets/service/booking_sheet.dart';
 
 class FavouritesScreen extends StatefulWidget {
-  const FavouritesScreen({super.key});
+  final FavouritesController favController;
+  final CreateBookingUseCase createBooking;
+
+  const FavouritesScreen({
+    super.key,
+    required this.favController,
+    required this.createBooking,
+  });
 
   @override
   State<FavouritesScreen> createState() => _FavouritesScreenState();
 }
 
 class _FavouritesScreenState extends State<FavouritesScreen> {
-  late final FavouritesController controller;
-  late final CreateBookingUseCase createBooking;
-
-  @override
-  void initState() {
-    super.initState();
-
-    final repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
-
-    controller = FavouritesController(
-      getFavourites: GetFavouritesUseCase(repo),
-      getServices: GetServicesUseCase(repo),
-      toggleFavourite: ToggleFavouriteUseCase(repo),
-    );
-
-    createBooking = CreateBookingUseCase(repo);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.load();
-    });
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
+  FavouritesController get controller => widget.favController;
+  CreateBookingUseCase get createBooking => widget.createBooking;
 
   Future<void> _openBookingSheet({
     required String providerId,
@@ -75,7 +52,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
   }
 
   Future<void> _openProviderDetailsSheet({
-    required dynamic provider, 
+    required dynamic provider,
     required String? serviceId,
   }) async {
     await showModalBottomSheet(
@@ -89,12 +66,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
         heightFactor: 0.62,
         child: ProviderDetailsSheet(
           provider: provider,
-          isFavourite: true, 
+          isFavourite: controller.isFavourite(provider.id),
           onToggleFavourite: () async {
-            await controller.removeFavourite(provider.id);
+            await controller.toggle(provider.id);
             if (mounted) Navigator.pop(context);
           },
-          onBook: () {
+          onBook: () async {
             Navigator.pop(context);
             if (serviceId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +79,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
               );
               return;
             }
-            _openBookingSheet(providerId: provider.id, serviceId: serviceId);
+            await _openBookingSheet(providerId: provider.id, serviceId: serviceId);
           },
         ),
       ),
@@ -134,10 +111,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                   const SizedBox(height: 14),
 
                   if (controller.loading)
-                    const Center(child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(),
-                    ))
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
                   else if (controller.error != null)
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -170,7 +149,10 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                       child: Text(
                         "No favourites yet",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     )
                   else
@@ -179,14 +161,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
 
                       return ProviderCard(
                         provider: p,
-                        isFavourite: true,
-                        onFavourite: () => controller.removeFavourite(p.id),
-
+                        isFavourite: controller.isFavourite(p.id),
+                        onFavourite: () => controller.toggle(p.id),
                         onViewDetails: () => _openProviderDetailsSheet(
                           provider: p,
                           serviceId: serviceId,
                         ),
-
                         onBookNow: () {
                           if (serviceId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
