@@ -27,11 +27,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
+  bool _isEmailNotVerifiedError(String message) {
+    final m = message.toLowerCase();
+    return m.contains('email not verified') ||
+        (m.contains('not verified') && m.contains('email'));
+  }
+
   Future<void> _login() async {
-    await ref
-        .read(authControllerProvider.notifier)
-        .login(
-          email: _emailController.text.trim(),
+    final email = _emailController.text.trim();
+
+    await ref.read(authControllerProvider.notifier).login(
+          email: email,
           password: _passwordController.text,
         );
 
@@ -40,17 +46,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     state.when(
       data: (role) {
         if (role == null) return;
+
         final normalizedRole = role.trim().toLowerCase();
+
         if (normalizedRole == 'admin') {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.adminMain, (r) => false);
-          } else if (normalizedRole == 'provider') {
-            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.providerMain, (r) => false);
-            } else {
-              Navigator.pushNamedAndRemoveUntil(context, AppRoutes.main, (r) => false);
-              }
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.adminMain,
+            (r) => false,
+          );
+        } else if (normalizedRole == 'provider') {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.providerMain,
+            (r) => false,
+          );
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.main,
+            (r) => false,
+          );
+        }
       },
       loading: () {},
-      error: (e, _) => _snack(e.toString()),
+      error: (e, _) {
+        final message = e.toString();
+
+        if (_isEmailNotVerifiedError(message)) {
+          _snack('Email not verified. Please verify your email first.');
+
+          Navigator.pushNamed(
+            context,
+            AppRoutes.verifyEmail,
+            arguments: email,
+          );
+          return;
+        }
+
+        _snack(message);
+      },
     );
   }
 
@@ -125,7 +160,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           RememberForgotRow(
             rememberMe: _rememberMe,
             onChanged: (val) => setState(() => _rememberMe = val ?? false),
-            onForgot: () {},
+            onForgot: () =>
+                Navigator.pushNamed(context, AppRoutes.forgotPassword),
           ),
 
           const SizedBox(height: 24),

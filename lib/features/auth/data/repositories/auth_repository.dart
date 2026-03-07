@@ -34,7 +34,7 @@ class AuthRepository implements IAuthRepository {
         password: password,
         role: role,
         profession: profession,
-        serviceSlug: serviceSlug, // ✅ FIXED
+        serviceSlug: serviceSlug,
       );
       return right(unit);
     } catch (e) {
@@ -54,6 +54,72 @@ class AuthRepository implements IAuthRepository {
         password: password,
       );
       return right(role);
+    } catch (e) {
+      if (e is Failure) return left(e);
+      return left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> verifyEmail({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      await _authDataSource.verifyEmail(
+        email: email,
+        otp: otp,
+      );
+      return right(unit);
+    } catch (e) {
+      if (e is Failure) return left(e);
+      return left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> resendVerification({
+    required String email,
+  }) async {
+    try {
+      await _authDataSource.resendVerification(
+        email: email,
+      );
+      return right(unit);
+    } catch (e) {
+      if (e is Failure) return left(e);
+      return left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      await _authDataSource.forgotPassword(
+        email: email,
+      );
+      return right(unit);
+    } catch (e) {
+      if (e is Failure) return left(e);
+      return left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      await _authDataSource.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+      return right(unit);
     } catch (e) {
       if (e is Failure) return left(e);
       return left(ServerFailure(message: e.toString()));

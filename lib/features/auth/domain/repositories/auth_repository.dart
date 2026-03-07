@@ -17,5 +17,24 @@ abstract interface class IAuthRepository {
     required String password,
   });
 
+  Future<Either<Failure, Unit>> verifyEmail({
+    required String email,
+    required String otp,
+  });
+
+  Future<Either<Failure, Unit>> resendVerification({
+    required String email,
+  });
+
+  Future<Either<Failure, Unit>> forgotPassword({
+    required String email,
+  });
+
+  Future<Either<Failure, Unit>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  });
+
   Future<Either<Failure, Unit>> logout();
 }

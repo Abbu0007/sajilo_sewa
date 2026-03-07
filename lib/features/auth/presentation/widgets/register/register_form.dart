@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sajilo_sewa/app/routes/app_routes.dart';
 import 'package:sajilo_sewa/core/api/api_client.dart';
 import 'package:sajilo_sewa/core/widgets/my_textformfield.dart';
 import '../../providers/auth_providers.dart';
@@ -25,7 +26,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
   final fullName = TextEditingController();
   final email = TextEditingController();
-  final phone = TextEditingController(); // ✅ store only 10 digits
+  final phone = TextEditingController();
   final password = TextEditingController();
   final confirmPassword = TextEditingController();
   final profession = TextEditingController();
@@ -36,10 +37,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
   bool hideConfirmPass = true;
   bool agree = false;
 
-  // ✅ NEW: services from backend
   bool servicesLoading = false;
   String? servicesError;
-  List<Map<String, String>> services = []; // [{name, slug}]
+  List<Map<String, String>> services = [];
   String? selectedServiceSlug;
   String? selectedServiceName;
 
@@ -86,18 +86,21 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       final Dio dio = ApiClient.instance.dio;
 
       final res = await dio.get('/api/services');
-
       final data = res.data;
 
-      final List items = (data is Map && data['items'] is List) ? data['items'] : [];
+      final List items =
+          (data is Map && data['items'] is List) ? data['items'] : [];
 
-      final parsed = items.map<Map<String, String>>((e) {
-        final m = (e as Map).cast<String, dynamic>();
-        return {
-          'name': (m['name'] ?? '').toString(),
-          'slug': (m['slug'] ?? '').toString(),
-        };
-      }).where((x) => x['slug']!.trim().isNotEmpty).toList();
+      final parsed = items
+          .map<Map<String, String>>((e) {
+            final m = (e as Map).cast<String, dynamic>();
+            return {
+              'name': (m['name'] ?? '').toString(),
+              'slug': (m['slug'] ?? '').toString(),
+            };
+          })
+          .where((x) => x['slug']!.trim().isNotEmpty)
+          .toList();
 
       setState(() {
         services = parsed;
@@ -176,14 +179,18 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
       }
     }
 
+    final enteredEmail = email.text.trim();
+
     await ref.read(authControllerProvider.notifier).signUp(
           fullName: fullName.text.trim(),
-          email: email.text.trim(),
+          email: enteredEmail,
           phone: phone10,
           password: password.text,
           role: role.value,
-          profession: role == RegisterRole.provider ? profession.text.trim() : null,
-          serviceSlug: role == RegisterRole.provider ? selectedServiceSlug : null,
+          profession:
+              role == RegisterRole.provider ? profession.text.trim() : null,
+          serviceSlug:
+              role == RegisterRole.provider ? selectedServiceSlug : null,
         );
 
     final state = ref.read(authControllerProvider);
@@ -191,8 +198,14 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
     state.when(
       data: (v) {
         if (v == 'success') {
-          _snack("Account Created");
-          Navigator.pop(context);
+          _snack("Account created. Please verify your email.");
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.verifyEmail,
+            (route) => false,
+            arguments: enteredEmail,
+          );
         }
       },
       loading: () {},
@@ -271,7 +284,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
               icon: Icons.lock_outline,
               obscure: hideConfirmPass,
               suffix: IconButton(
-                icon: Icon(hideConfirmPass ? Icons.visibility_off : Icons.visibility),
+                icon: Icon(
+                  hideConfirmPass ? Icons.visibility_off : Icons.visibility,
+                ),
                 onPressed: () =>
                     setState(() => hideConfirmPass = !hideConfirmPass),
               ),
@@ -300,21 +315,22 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             if (role == RegisterRole.provider) ...[
               const SizedBox(height: 10),
 
-              // ✅ Service Category selector (backend driven)
-              Align(
+              const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "Service Category",
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 6),
+
               InkWell(
                 onTap: _openServicePicker,
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE8E8E8)),
@@ -358,22 +374,24 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
               ProfessionField(
                 controller: profession,
-                onTapPick: () {
-                },
+                onTapPick: () {},
               ),
             ],
 
             const SizedBox(height: 10),
+
             TermsCheckbox(
               value: agree,
               onChanged: (v) => setState(() => agree = v ?? false),
             ),
 
             const SizedBox(height: 14),
+
             CreateAccountButton(
               isLoading: isLoading,
               onPressed: _submit,
             ),
+
             const SizedBox(height: 10),
             const SocialButtons(),
             const SizedBox(height: 10),

@@ -13,12 +13,32 @@ abstract interface class IAuthDataSource {
     required String password,
     required String role,
     String? profession,
-
-    // ✅ NEW
     String? serviceSlug,
   });
 
-  Future<String> login({required String email, required String password});
+  Future<String> login({
+    required String email,
+    required String password,
+  });
+
+  Future<void> verifyEmail({
+    required String email,
+    required String otp,
+  });
+
+  Future<void> resendVerification({
+    required String email,
+  });
+
+  Future<void> forgotPassword({
+    required String email,
+  });
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  });
 
   Future<void> logout();
 }
@@ -50,7 +70,7 @@ class AuthDataSource implements IAuthDataSource {
       final online = await networkInfo.isConnected;
 
       if (online) {
-        final data = await remote.register(
+        await remote.register(
           fullName: fullName,
           email: email,
           phone: phone,
@@ -59,25 +79,6 @@ class AuthDataSource implements IAuthDataSource {
           profession: profession,
           serviceSlug: serviceSlug,
         );
-
-        await UserSessionService.instance.saveSession(
-          userKey: data.user.email.trim().toLowerCase(),
-          role: data.user.role,
-          token: data.token,
-          serviceSlug: serviceSlug,
-        );
-
-        await hive.cacheUserFromApi(
-          id: data.user.id,
-          fullName: data.user.toEntity().fullName,
-          email: data.user.email,
-          phone: data.user.phone,
-          role: data.user.role,
-          profession: data.user.profession,
-          token: data.token,
-          serviceSlug: serviceSlug,
-        );
-
         return;
       }
 
@@ -97,14 +98,16 @@ class AuthDataSource implements IAuthDataSource {
   }
 
   @override
-  Future<String> login({required String email, required String password}) async {
+  Future<String> login({
+    required String email,
+    required String password,
+  }) async {
     try {
       final online = await networkInfo.isConnected;
 
       if (online) {
         final data = await remote.login(email: email, password: password);
 
-        // ✅ Keep as-is; if your API model later contains serviceSlug, save it here too.
         await UserSessionService.instance.saveSession(
           userKey: data.user.email.trim().toLowerCase(),
           role: data.user.role,
@@ -128,6 +131,88 @@ class AuthDataSource implements IAuthDataSource {
     } catch (e) {
       if (e is Failure) throw e;
       throw ServerFailure(message: 'Login failed: $e');
+    }
+  }
+
+  @override
+  Future<void> verifyEmail({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final online = await networkInfo.isConnected;
+      if (!online) {
+        throw ServerFailure(message: 'No internet connection');
+      }
+
+      await remote.verifyEmail(
+        email: email,
+        otp: otp,
+      );
+    } catch (e) {
+      if (e is Failure) throw e;
+      throw ServerFailure(message: 'Verify email failed: $e');
+    }
+  }
+
+  @override
+  Future<void> resendVerification({
+    required String email,
+  }) async {
+    try {
+      final online = await networkInfo.isConnected;
+      if (!online) {
+        throw ServerFailure(message: 'No internet connection');
+      }
+
+      await remote.resendVerification(
+        email: email,
+      );
+    } catch (e) {
+      if (e is Failure) throw e;
+      throw ServerFailure(message: 'Resend verification failed: $e');
+    }
+  }
+
+  @override
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final online = await networkInfo.isConnected;
+      if (!online) {
+        throw ServerFailure(message: 'No internet connection');
+      }
+
+      await remote.forgotPassword(
+        email: email,
+      );
+    } catch (e) {
+      if (e is Failure) throw e;
+      throw ServerFailure(message: 'Forgot password failed: $e');
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final online = await networkInfo.isConnected;
+      if (!online) {
+        throw ServerFailure(message: 'No internet connection');
+      }
+
+      await remote.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+    } catch (e) {
+      if (e is Failure) throw e;
+      throw ServerFailure(message: 'Reset password failed: $e');
     }
   }
 

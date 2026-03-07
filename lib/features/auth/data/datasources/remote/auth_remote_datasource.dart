@@ -44,14 +44,14 @@ class AuthRemoteDatasource {
         'password': password,
       };
 
-      
       if (role == "provider") {
         final p = (profession ?? '').trim();
         final s = (serviceSlug ?? '').trim();
 
         if (p.isEmpty || s.isEmpty) {
           throw ValidationFailure(
-            message: "Profession and service are required for service providers",
+            message:
+                "Profession and service are required for service providers",
           );
         }
 
@@ -86,6 +86,84 @@ class AuthRemoteDatasource {
       throw ServerFailure(message: 'Login failed: $e');
     }
   }
+
+
+
+  Future<void> verifyEmail({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      await dio.post(
+        ApiEndpoints.verifyEmail,
+        data: {
+          'email': email.trim(),
+          'otp': otp.trim(),
+        },
+      );
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    } catch (e) {
+      throw ServerFailure(message: 'Email verification failed: $e');
+    }
+  }
+
+  Future<void> resendVerification({
+    required String email,
+  }) async {
+    try {
+      await dio.post(
+        ApiEndpoints.resendVerification,
+        data: {
+          'email': email.trim(),
+        },
+      );
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    } catch (e) {
+      throw ServerFailure(message: 'Resend verification failed: $e');
+    }
+  }
+
+  Future<void> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      await dio.post(
+        ApiEndpoints.forgotPassword,
+        data: {
+          'email': email.trim(),
+        },
+      );
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    } catch (e) {
+      throw ServerFailure(message: 'Forgot password request failed: $e');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      await dio.post(
+        ApiEndpoints.resetPassword,
+        data: {
+          'email': email.trim(),
+          'otp': otp.trim(),
+          'newPassword': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      throw _mapDioError(e);
+    } catch (e) {
+      throw ServerFailure(message: 'Password reset failed: $e');
+    }
+  }
+
+
 
   Failure _mapDioError(DioException e) {
     final status = e.response?.statusCode;
