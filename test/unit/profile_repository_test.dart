@@ -1,8 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
 import 'package:sajilo_sewa/core/error/failures.dart';
 import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/profile_remote_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/data/models/profile_api_model.dart';
@@ -16,7 +14,7 @@ void main() {
 
   setUp(() {
     ds = MockProfileRemoteDatasource();
-    repo = ProfileRepository(profileRemoteDataSource: ds);
+    repo = ProfileRepository(profileRemoteDataSource: ds,);
   });
 
   final model = ProfileApiModel.fromJson({

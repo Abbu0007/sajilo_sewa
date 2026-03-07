@@ -6,9 +6,14 @@ class HomeLoadingBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: height,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: const Color(0xFFF3F4F6)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6),
+      ),
       child: const Center(child: CircularProgressIndicator()),
     );
   }
@@ -22,19 +27,27 @@ class HomeErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
-        color: const Color(0xFFFEF2F2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+        ),
+        color: isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color:
+                    isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           TextButton(onPressed: () => onRetry(), child: const Text("Retry")),
@@ -50,10 +63,20 @@ class HomeEmptyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: const Color(0xFFF3F4F6)),
-      child: Center(child: Text(text, style: const TextStyle(fontWeight: FontWeight.w800))),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
     );
   }
 }

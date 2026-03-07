@@ -28,6 +28,9 @@ class ProviderBookingDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final handleColor = isDark ? const Color(0xFF4B5563) : Colors.grey.shade300;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -37,17 +40,20 @@ class ProviderBookingDetailsSheet extends StatelessWidget {
               height: 5,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: handleColor,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     "Booking Details",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
                   ),
                 ),
                 IconButton(
@@ -57,11 +63,8 @@ class ProviderBookingDetailsSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-
             ProviderBookingHeader(booking: booking),
-
             const SizedBox(height: 12),
-
             Expanded(
               child: ListView(
                 children: [

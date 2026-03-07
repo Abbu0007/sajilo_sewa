@@ -9,7 +9,6 @@ class ProviderBookingActions extends StatelessWidget {
 
   final Future<void> Function()? onAccept;
   final Future<void> Function(String? reason)? onReject;
-
   final Future<void> Function()? onMarkInProgress;
   final Future<void> Function(String price, String? reason)? onRequestPayment;
   final Future<void> Function()? onMarkCompleted;
@@ -32,6 +31,10 @@ class ProviderBookingActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final helperTextColor =
+        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+
     final status = booking.status.trim().toLowerCase();
 
     final canDecision = _is(status, "pending");
@@ -90,7 +93,6 @@ class ProviderBookingActions extends StatelessWidget {
               ],
             ),
           ),
-
         if (hasUpdateHandlers && (canInProgress || canRequestPayment || canComplete || canCancel))
           ProviderBookingActionBlock(
             title: "Update Status",
@@ -112,7 +114,6 @@ class ProviderBookingActions extends StatelessWidget {
                       ),
                     ),
                   ),
-
                 if (canRequestPayment && onRequestPayment != null) ...[
                   const SizedBox(height: 10),
                   SizedBox(
@@ -142,12 +143,11 @@ class ProviderBookingActions extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "This will move booking to awaiting payment confirmation.",
-                    style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w700),
+                    style: TextStyle(color: helperTextColor, fontWeight: FontWeight.w700),
                   ),
                 ],
-
                 if (canComplete && onMarkCompleted != null) ...[
                   const SizedBox(height: 10),
                   SizedBox(
@@ -166,12 +166,11 @@ class ProviderBookingActions extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "When completed, rating request will go to both sides.",
-                    style: TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.w700),
+                    style: TextStyle(color: helperTextColor, fontWeight: FontWeight.w700),
                   ),
                 ],
-
                 if (canCancel && onCancel != null) ...[
                   const SizedBox(height: 10),
                   SizedBox(

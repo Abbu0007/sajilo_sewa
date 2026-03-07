@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
+import 'package:sajilo_sewa/core/providers/theme_provider.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
 import 'package:sajilo_sewa/features/dashboard/data/models/profile_stats_api_model.dart';
 import 'package:sajilo_sewa/features/dashboard/data/repositories/profile_repository_impl.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_view_model.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/privacy_policy_content.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_help_content.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_info_sheet.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_terms_content.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/presentation/widgets/profile/provider_profile_tile.dart';
 
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/profile_logout_button.dart';
@@ -21,9 +27,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _darkMode = false;
-
-  // ✅ keep stats future so it doesn't refetch on every rebuild
   Future<dynamic>? _statsFuture;
 
   @override
@@ -75,13 +78,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(profileViewModelProvider);
     final profile = state.profile;
+    final themeMode = ref.watch(themeProvider);
+    final isDark = themeMode == ThemeMode.dark;
 
     final name = state.isLoading ? "Loading..." : (profile?.fullName ?? "User");
     final email = state.isLoading ? "" : (profile?.email ?? "");
     final phone = state.isLoading ? "" : (profile?.phone ?? "Phone: N/A");
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -90,9 +95,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               phone: phone,
               email: email,
               avatarUrl: profile?.avatarUrl,
-              onSettingsTap: () {},
+              onSettingsTap: () async {
+                final result =
+                    await Navigator.pushNamed(context, AppRoutes.editProfile);
+                if (result == true) {
+                  await ref.read(profileViewModelProvider.notifier).loadProfile();
+                  setState(() {
+                    _refreshStats();
+                  });
+                }
+              },
             ),
-
             if (state.error != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -104,13 +117,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
-
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
                   await ref.read(profileViewModelProvider.notifier).loadProfile();
                   setState(() {
-                    _refreshStats(); // ✅ also refetch stats
+                    _refreshStats();
                   });
                 },
                 child: SingleChildScrollView(
@@ -118,11 +130,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
                   child: Column(
                     children: [
-                      // ✅ STATS ROW (REAL)
                       FutureBuilder(
                         future: _statsFuture,
                         builder: (context, snap) {
-                          // loading
                           if (snap.connectionState == ConnectionState.waiting) {
                             return const ProfileStatsRow(
                               completedBookings: "…",
@@ -131,7 +141,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             );
                           }
 
-                          // no data at all
                           if (!snap.hasData) {
                             return const ProfileStatsRow(
                               completedBookings: "0",
@@ -141,8 +150,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           }
 
                           final either = snap.data;
-
-                          // your repo returns Either<Failure, ProfileStatsApiModel>
                           return (either as dynamic).fold(
                             (l) => Column(
                               children: [
@@ -163,7 +170,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ],
                             ),
                             (ProfileStatsApiModel stats) => ProfileStatsRow(
-                              completedBookings: stats.completedBookings.toString(),
+                              completedBookings:
+                                  stats.completedBookings.toString(),
                               rating: stats.ratingAvg.toStringAsFixed(1),
                               totalReviews: stats.ratingCount.toString(),
                             ),
@@ -184,31 +192,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           final result =
                               await Navigator.pushNamed(context, AppRoutes.editProfile);
                           if (result == true) {
-                            ref.read(profileViewModelProvider.notifier).loadProfile();
+                            await ref.read(profileViewModelProvider.notifier).loadProfile();
                             setState(() {
                               _refreshStats();
                             });
                           }
                         },
                       ),
-
                       const SizedBox(height: 10),
-                      ProfileTile(
+                      ProviderProfileTile(
                         iconBg: const Color(0xFFF3ECFF),
                         icon: Icons.location_on_outlined,
                         iconColor: const Color(0xFF8B5CF6),
                         title: "Saved Addresses",
+                        trailingText: "Soon",
                         onTap: () {},
+                        enabled: false,
                       ),
                       const SizedBox(height: 10),
-                      ProfileTile(
+                      ProviderProfileTile(
                         iconBg: const Color(0xFFEAFBF2),
                         icon: Icons.credit_card,
                         iconColor: const Color(0xFF22C55E),
                         title: "Payment Methods",
+                        trailingText: "Soon",
                         onTap: () {},
+                        enabled: false,
                       ),
-
                       const SizedBox(height: 18),
                       const ProfileSectionTitle(title: "Preferences"),
                       const SizedBox(height: 10),
@@ -217,7 +227,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.notifications_none,
                         iconColor: const Color(0xFF3B82F6),
                         title: "Notifications",
-                        trailingText: "On",
+                        trailingText: "Disabled",
                         onTap: () {},
                       ),
                       const SizedBox(height: 10),
@@ -235,11 +245,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.dark_mode_outlined,
                         iconColor: const Color(0xFFEF4444),
                         title: "Dark Mode",
-                        value: _darkMode,
-                        onChanged: (v) => setState(() => _darkMode = v),
+                        value: isDark,
+                        onChanged: (v) {
+                          ref.read(themeProvider.notifier).toggleTheme(v);
+                        },
                       ),
 
                       const SizedBox(height: 18),
+
                       const ProfileSectionTitle(title: "Support & Legal"),
                       const SizedBox(height: 10),
                       ProfileTile(
@@ -247,33 +260,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: Icons.help_outline,
                         iconColor: const Color(0xFF06B6D4),
                         title: "Help Center",
-                        onTap: () {},
+                        onTap: () {
+                          ProfileInfoSheet.show(
+                            context,
+                            title: "Help Center",
+                            content: const HelpCenterContent(),
+                          );
+                        },
                       ),
                       const SizedBox(height: 10),
                       ProfileTile(
-                        iconBg: const Color(0xFFF2EFFF),
-                        icon: Icons.privacy_tip_outlined,
-                        iconColor: const Color(0xFF8B5CF6),
-                        title: "Privacy Policy",
-                        onTap: () {},
-                      ),
+                          iconBg: const Color(0xFFF2EFFF),
+                          icon: Icons.privacy_tip_outlined,
+                          iconColor: const Color(0xFF8B5CF6),
+                          title: "Privacy Policy",
+                          onTap: () {
+                            ProfileInfoSheet.show(
+                              context,
+                              title: "Privacy Policy",
+                              content: const PrivacyPolicyContent(),
+                            );
+                          },
+                        ),
                       const SizedBox(height: 10),
                       ProfileTile(
-                        iconBg: const Color(0xFFEFF6FF),
-                        icon: Icons.description_outlined,
-                        iconColor: const Color(0xFF3B82F6),
-                        title: "Terms of Service",
-                        onTap: () {},
+                          iconBg: const Color(0xFFEFF6FF),
+                          icon: Icons.description_outlined,
+                          iconColor: const Color(0xFF3B82F6),
+                          title: "Terms of Service",
+                          onTap: () {
+                            ProfileInfoSheet.show(
+                              context,
+                              title: "Terms of Service",
+                              content: const TermsContent(),
+                            );
+                          },
                       ),
-
                       const SizedBox(height: 16),
                       ProfileLogoutButton(onTap: _logout),
 
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         "Version 1.0.0",
                         style: TextStyle(
-                          color: Color(0xFF9CA3AF),
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF9CA3AF),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),

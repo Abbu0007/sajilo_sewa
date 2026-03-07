@@ -1,34 +1,41 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
 import 'package:sajilo_sewa/core/api/api_client.dart';
 import 'package:sajilo_sewa/core/api/api_endpoints.dart';
+import 'package:sajilo_sewa/core/providers/theme_provider.dart';
 import 'package:sajilo_sewa/core/services/storage/user_session_service.dart';
-import '../view_model/provider_profile_controller.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/privacy_policy_content.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_help_content.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_info_sheet.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_terms_content.dart';
+import 'package:sajilo_sewa/features/dashboard/presentation/widgets/profile/profile_tile.dart';
 import '../pages/edit_provider_profile_screen.dart';
+import '../view_model/provider_profile_provider.dart';
 import '../widgets/profile/provider_profile_header.dart';
-import '../widgets/profile/provider_profile_stats_row.dart';
 import '../widgets/profile/provider_profile_section_tile.dart';
-import '../widgets/profile/Provider_profile_tile.dart';
+import '../widgets/profile/provider_profile_stats_row.dart';
+import '../widgets/profile/provider_profile_tile.dart';
 import '../widgets/profile/provider_profile_tile_switch.dart';
 
-class ProviderProfileScreen extends StatefulWidget {
+class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
 
   @override
-  State<ProviderProfileScreen> createState() => _ProviderProfileScreenState();
+  ConsumerState<ProviderProfileScreen> createState() =>
+      _ProviderProfileScreenState();
 }
 
-class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
-  bool _darkMode = false;
+class _ProviderProfileScreenState
+    extends ConsumerState<ProviderProfileScreen> {
   Future<num>? _earningsFuture;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<ProviderProfileController>().load();
+      await ref.read(providerProfileProvider.notifier).load();
       _refreshEarnings();
     });
   }
@@ -60,7 +67,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   Future<num> _calculateTotalEarnings() async {
     final Dio dio = ApiClient.instance.dio;
 
-    final res = await dio.get(ApiEndpoints.providerBookingsMine(status: "completed"));
+    final res =
+        await dio.get(ApiEndpoints.providerBookingsMine(status: "completed"));
     final data = res.data as Map<String, dynamic>;
     final items = (data['items'] ?? data['bookings'] ?? []) as List;
 
@@ -80,20 +88,15 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   }
 
   Future<void> _openEdit() async {
-    final controller = context.read<ProviderProfileController>();
-
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider.value(
-          value: controller,
-          child: const EditProviderProfileScreen(),
-        ),
+        builder: (_) => const EditProviderProfileScreen(),
       ),
     );
 
     if (result == true) {
-      await context.read<ProviderProfileController>().load();
+      await ref.read(providerProfileProvider.notifier).load();
       _refreshEarnings();
     }
   }
@@ -105,8 +108,14 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         title: const Text("Logout"),
         content: const Text("Are you sure you want to logout?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Logout")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Logout"),
+          ),
         ],
       ),
     );
@@ -125,24 +134,26 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.watch<ProviderProfileController>();
-    final me = c.me;
-    final profile = c.profile;
+    final state = ref.watch(providerProfileProvider);
+    final me = state.me;
+    final profile = state.profile;
+    final themeMode = ref.watch(themeProvider);
+    final isDark = themeMode == ThemeMode.dark;
 
-    final name = c.loading
+    final name = state.loading
         ? "Loading..."
         : ((me?.fullName ?? "").trim().isNotEmpty ? me!.fullName : "Provider");
 
-    final email = c.loading ? "" : (me?.email ?? "");
-    final phone = c.loading ? "" : (me?.phone ?? "");
+    final email = state.loading ? "" : (me?.email ?? "");
+    final phone = state.loading ? "" : (me?.phone ?? "");
     final avatarUrl = _resolveAvatar(me?.avatarUrl);
-    final profession = c.loading ? "" : (me?.profession ?? "");
+    final profession = state.loading ? "" : (me?.profession ?? "");
 
     final bookingsCompleted = (profile?.completedJobs ?? 0).toString();
     final ratingAvg = ((profile?.ratingAvg ?? 0).toDouble()).toStringAsFixed(1);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -154,18 +165,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               avatarUrl: avatarUrl,
               onSettingsTap: _openEdit,
             ),
-            if (c.error != null)
+            if (state.error != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: Text(
-                  c.error!,
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+                  state.error!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  await context.read<ProviderProfileController>().load();
+                  await ref.read(providerProfileProvider.notifier).load();
                   _refreshEarnings();
                 },
                 child: SingleChildScrollView(
@@ -177,7 +191,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         future: _earningsFuture,
                         builder: (context, snap) {
                           final earnings = snap.data ?? 0;
-                          final earningsText = "Rs. ${_formatWithCommas(earnings)}";
+                          final earningsText =
+                              "Rs. ${_formatWithCommas(earnings)}";
 
                           return ProviderProfileStatsRow(
                             bookings: bookingsCompleted,
@@ -187,7 +202,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 18),
-                      const ProviderProfileSectionTitle(title: "Account Settings"),
+                      const ProviderProfileSectionTitle(
+                        title: "Account Settings",
+                      ),
                       const SizedBox(height: 10),
                       ProviderProfileTile(
                         iconBg: const Color(0xFFEFF2FF),
@@ -219,12 +236,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       const SizedBox(height: 18),
                       const ProviderProfileSectionTitle(title: "Preferences"),
                       const SizedBox(height: 10),
-                      ProviderProfileTile(
+                      ProfileTile(
                         iconBg: const Color(0xFFEAF2FF),
                         icon: Icons.notifications_none,
                         iconColor: const Color(0xFF3B82F6),
                         title: "Notifications",
-                        trailingText: "On",
+                        trailingText: "Disabled",
                         onTap: () {},
                       ),
                       const SizedBox(height: 10),
@@ -242,18 +259,22 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         icon: Icons.dark_mode_outlined,
                         iconColor: const Color(0xFFEF4444),
                         title: "Dark Mode",
-                        value: _darkMode,
-                        onChanged: (v) => setState(() => _darkMode = v),
+                        value: isDark,
+                        onChanged: (v) {
+                          ref.read(themeProvider.notifier).toggleTheme(v);
+                        },
                       ),
-                      const SizedBox(height: 18),
-                      const ProviderProfileSectionTitle(title: "Support & Legal"),
                       const SizedBox(height: 10),
                       ProviderProfileTile(
                         iconBg: const Color(0xFFE8F7FF),
                         icon: Icons.help_outline,
                         iconColor: const Color(0xFF06B6D4),
                         title: "Help Center",
-                        onTap: () {},
+                        onTap: () { ProfileInfoSheet.show(
+                            context,
+                            title: "Help Center",
+                            content: const HelpCenterContent(),
+                          );},
                       ),
                       const SizedBox(height: 10),
                       ProviderProfileTile(
@@ -261,7 +282,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         icon: Icons.privacy_tip_outlined,
                         iconColor: const Color(0xFF8B5CF6),
                         title: "Privacy Policy",
-                        onTap: () {},
+                        onTap: () { ProfileInfoSheet.show(
+                        context,
+                        title: "Privacy Policy",
+                        content: const PrivacyPolicyContent(),
+                      );},
                       ),
                       const SizedBox(height: 10),
                       ProviderProfileTile(
@@ -269,33 +294,45 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         icon: Icons.description_outlined,
                         iconColor: const Color(0xFF3B82F6),
                         title: "Terms of Service",
-                        onTap: () {},
+                        onTap: () {     ProfileInfoSheet.show(
+                          context,
+                          title: "Terms of Service",
+                          content: const TermsContent(),
+                        );},
                       ),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: OutlinedButton(
-                          onPressed: c.loading ? null : _logout,
+                          onPressed: state.loading ? null : _logout,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFEF4444),
-                            side: const BorderSide(color: Color(0xFFFCA5A5)),
-                            backgroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: Color(0xFFFCA5A5),
+                            ),
+                            backgroundColor:
+                                isDark ? const Color(0xFF161A22) : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: const Text(
                             "Logout",
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         "Version 1.0.0",
                         style: TextStyle(
-                          color: Color(0xFF9CA3AF),
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF9CA3AF),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),

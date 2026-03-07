@@ -5,7 +5,6 @@ import '../../domain/usecases/create_booking_usecase.dart';
 import '../../domain/usecases/get_providers_by_service_usecase.dart';
 import '../view_model/favourites_controller.dart';
 import '../view_model/service_providers_controller.dart';
-
 import '../widgets/service/booking_sheet.dart';
 import '../widgets/service/provider_card.dart';
 import '../widgets/service/provider_details_sheet.dart';
@@ -45,7 +44,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
     super.initState();
 
     controller = ServiceProvidersController(
-    getProviders: GetProvidersByServiceUseCase(repo),
+      getProviders: GetProvidersByServiceUseCase(repo),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -66,7 +65,7 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -88,12 +87,12 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
   }
 
   Future<void> _openProviderDetailsSheet({
-    required dynamic provider, // ProviderEntity
+    required dynamic provider,
   }) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -116,19 +115,34 @@ class _ServiceProvidersScreenState extends State<ServiceProvidersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final errorColor = isDark ? const Color(0xFFFCA5A5) : Colors.red;
+    final emptyColor = isDark ? const Color(0xFF9CA3AF) : null;
+
     return AnimatedBuilder(
       animation: Listenable.merge([controller, favController]),
       builder: (_, __) {
         return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             title: Text(widget.title),
           ),
           body: controller.loading
               ? const Center(child: CircularProgressIndicator())
               : controller.error != null
-                  ? Center(child: Text(controller.error!))
+                  ? Center(
+                      child: Text(
+                        controller.error!,
+                        style: TextStyle(color: errorColor),
+                      ),
+                    )
                   : controller.providers.isEmpty
-                      ? const Center(child: Text("No providers available"))
+                      ? Center(
+                          child: Text(
+                            "No providers available",
+                            style: TextStyle(color: emptyColor),
+                          ),
+                        )
                       : ListView(
                           padding: const EdgeInsets.all(16),
                           children: controller.providers.map((p) {

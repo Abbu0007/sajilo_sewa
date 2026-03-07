@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sajilo_sewa/core/api/api_endpoints.dart';
+import 'package:sajilo_sewa/core/utils/url_utils.dart';
 
 class ProviderProfileHeader extends StatelessWidget {
   final String name;
@@ -20,9 +20,8 @@ class ProviderProfileHeader extends StatelessWidget {
   });
 
   String? _resolveAvatar(String? url) {
-    if (url == null || url.isEmpty) return null;
-    if (url.startsWith("http")) return url;
-    return "${ApiEndpoints.serverUrl}$url";
+    final resolved = UrlUtils.normalizeMediaUrl(url);
+    return resolved.isEmpty ? null : resolved;
   }
 
   @override

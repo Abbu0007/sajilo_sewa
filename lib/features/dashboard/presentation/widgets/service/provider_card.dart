@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/api/api_endpoints.dart';
 import '../../../domain/entities/provider_entity.dart';
 
 class ProviderCard extends StatelessWidget {
   final ProviderEntity provider;
   final bool isFavourite;
-
   final VoidCallback onViewDetails;
   final VoidCallback onBookNow;
   final VoidCallback onFavourite;
@@ -19,10 +19,23 @@ class ProviderCard extends StatelessWidget {
   });
 
   String _resolveAvatarUrl(String? url) {
-    if (url == null) return "";
+    if (url == null || url.trim().isEmpty) return "";
+
     final u = url.trim();
-    if (u.isEmpty) return "";
-    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+    final server = ApiEndpoints.mediaServerUrl;
+
+    if (u.startsWith('http://') || u.startsWith('https://')) {
+      return u
+          .replaceFirst("http://10.0.2.2:5000", server)
+          .replaceFirst("http://localhost:5000", server)
+          .replaceFirst("http://127.0.0.1:5000", server);
+    }
+
+    if (u.startsWith('/')) {
+      return '$server$u';
+    }
+
+    return '$server/$u';
   }
 
   @override
@@ -38,23 +51,31 @@ class ProviderCard extends StatelessWidget {
             .toUpperCase();
 
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final rating = provider.avgRating;
     final ratingCount = provider.ratingCount;
-
     final jobs = provider.completedJobs;
     final price = provider.startingPrice;
 
     final avatar = _resolveAvatarUrl(provider.avatarUrl);
     final hasAvatar = avatar.isNotEmpty;
 
+    final cardBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final avatarBg =
+        isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final subColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        color: Colors.white,
+        border: Border.all(color: borderColor),
+        color: cardBg,
       ),
       child: Column(
         children: [
@@ -62,17 +83,36 @@ class ProviderCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: const Color(0xFFF3F4F6),
-                backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
-                child: hasAvatar
-                    ? null
-                    : Text(
-                        initials,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
+                backgroundColor: avatarBg,
+                child: ClipOval(
+                  child: hasAvatar
+                      ? Image.network(
+                          avatar,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Text(
+                                initials,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
                         ),
-                      ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -86,7 +126,7 @@ class ProviderCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       provider.profession,
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                      style: TextStyle(color: subColor, fontSize: 12),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -98,7 +138,7 @@ class ProviderCard extends StatelessWidget {
                               ? "${rating.toStringAsFixed(1)} ($ratingCount)"
                               : "No ratings yet",
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: subColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -142,8 +182,10 @@ class ProviderCard extends StatelessWidget {
                   label: const Text("View Details"),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: scheme.primary,
-                    side: const BorderSide(color: Color(0xFFE5E7EB)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: BorderSide(color: borderColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -158,7 +200,9 @@ class ProviderCard extends StatelessWidget {
                     backgroundColor: scheme.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -182,17 +226,24 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final border =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final iconColor =
+        isDark ? const Color(0xFFD1D5DB) : Colors.black54;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: const Color(0xFFF3F4F6),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: bg,
+        border: Border.all(color: border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.black54),
+          Icon(icon, size: 16, color: iconColor),
           const SizedBox(width: 6),
           Text(
             label,

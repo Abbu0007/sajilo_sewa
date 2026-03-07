@@ -14,13 +14,30 @@ class HomeSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final actionColor =
+        isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB);
+
     return Row(
       children: [
-        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         const Spacer(),
         InkWell(
           onTap: onAction,
-          child: Text(actionText, style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.w800)),
+          child: Text(
+            actionText,
+            style: TextStyle(
+              color: actionColor,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
       ],
     );

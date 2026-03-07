@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/utils/url_utils.dart';
 import '../../../domain/entities/provider_booking_entity.dart';
 import 'provider_booking_avatar.dart';
 import 'provider_booking_status_pill.dart';
@@ -8,10 +9,7 @@ class ProviderBookingHeader extends StatelessWidget {
   const ProviderBookingHeader({super.key, required this.booking});
 
   String _resolveAvatarUrl(String? url) {
-    if (url == null) return "";
-    final u = url.trim();
-    if (u.isEmpty) return "";
-    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+    return UrlUtils.normalizeMediaUrl(url);
   }
 
   @override

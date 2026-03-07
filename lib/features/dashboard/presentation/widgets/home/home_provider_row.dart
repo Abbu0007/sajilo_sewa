@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/utils/url_utils.dart';
 
 class HomeProviderRow extends StatelessWidget {
   final String name;
   final String profession;
   final String? avatarUrl;
-
   final double avgRating;
   final int ratingCount;
   final int completedJobs;
   final int startingPrice;
-
   final VoidCallback onTap;
 
   const HomeProviderRow({
@@ -25,19 +24,25 @@ class HomeProviderRow extends StatelessWidget {
   });
 
   String _resolveAvatarUrl(String? url) {
-    if (url == null) return "";
-    final u = url.trim();
-    if (u.isEmpty) return "";
-
-    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+    return UrlUtils.normalizeMediaUrl(url);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final initials = _initials(name);
-
     final avatar = _resolveAvatarUrl(avatarUrl);
     final hasAvatar = avatar.isNotEmpty;
+
+    final cardBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final avatarBg =
+        isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final subColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+    final chevronColor =
+        isDark ? const Color(0xFF6B7280) : Colors.grey;
 
     return InkWell(
       onTap: onTap,
@@ -47,23 +52,23 @@ class HomeProviderRow extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          color: Colors.white,
+          border: Border.all(color: borderColor),
+          color: cardBg,
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xFFF3F4F6),
+              backgroundColor: avatarBg,
               backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
               onBackgroundImageError: hasAvatar ? (_, __) {} : null,
               child: hasAvatar
                   ? null
                   : Text(
                       initials,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: Colors.black87,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
             ),
@@ -76,7 +81,7 @@ class HomeProviderRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     profession,
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                    style: TextStyle(color: subColor, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -102,7 +107,7 @@ class HomeProviderRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: Colors.grey),
+            Icon(Icons.chevron_right, color: chevronColor),
           ],
         ),
       ),
@@ -139,17 +144,24 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final border =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final iconDefault =
+        isDark ? const Color(0xFFD1D5DB) : Colors.black54;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: const Color(0xFFF3F4F6),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: bg,
+        border: Border.all(color: border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: iconColor ?? Colors.black54),
+          Icon(icon, size: 16, color: iconColor ?? iconDefault),
           const SizedBox(width: 6),
           Text(
             label,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/features/dashboard/data/datasources/local/dashboard_local_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/data/datasources/remote/dashboard_remote_datasource.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/widgets/bookings/booking_details_sheet.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
@@ -6,7 +7,6 @@ import '../../domain/usecases/get_my_bookings_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../../domain/usecases/confirm_payment_usecase.dart';
 import '../view_model/bookings_controller.dart';
-
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -32,7 +32,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   void initState() {
     super.initState();
 
-    final repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource());
+    final repo = DashboardRepositoryImpl(remote: DashboardRemoteDataSource(),local: DashboardLocalDataSourceImpl());
 
     controller = BookingsController(
       getMyBookings: GetMyBookingsUseCase(repo),
@@ -91,7 +91,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -112,11 +112,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final pillBg = isDark ? const Color(0xFF161A22) : const Color(0xFFF8FAFC);
+    final tabBg = isDark ? const Color(0xFF161A22) : const Color(0xFFF1F5F9);
+    final tabText =
+        isDark ? const Color(0xFFD1D5DB) : const Color(0xFF0F172A);
+    final subText =
+        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B);
+    final cardSub =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
+    final titleColor =
+        isDark ? Colors.white : const Color(0xFF0F172A);
+
     return AnimatedBuilder(
       animation: controller,
       builder: (_, __) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: () => controller.load(),
@@ -125,40 +140,50 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               "My Bookings",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: titleColor,
+                              ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               "Track bookings by status.",
-                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: subText,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          color: const Color(0xFFF8FAFC),
+                          border: Border.all(color: borderColor),
+                          color: pillBg,
                         ),
                         child: Text(
                           "Total: ${controller.items.length}",
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 14),
-
-                  // ✅ Tabs like website
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -171,25 +196,23 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               s.replaceAll("_", " "),
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                color: selected ? Colors.white : const Color(0xFF0F172A),
+                                color: selected ? Colors.white : tabText,
                               ),
                             ),
                             selected: selected,
                             onSelected: (_) => controller.load(newStatus: s),
                             selectedColor: Theme.of(context).colorScheme.primary,
-                            backgroundColor: const Color(0xFFF1F5F9),
+                            backgroundColor: tabBg,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(999),
-                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              side: BorderSide(color: borderColor),
                             ),
                           ),
                         );
                       }).toList(),
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   if (controller.loading)
                     const Padding(
                       padding: EdgeInsets.all(24),
@@ -216,8 +239,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                            color: Colors.white,
+                            border: Border.all(color: borderColor),
+                            color: cardBg,
                             boxShadow: const [
                               BoxShadow(
                                 color: Color(0x140F172A),
@@ -235,20 +258,23 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   Expanded(
                                     child: Text(
                                       "$serviceName  •  $providerName",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 14,
-                                        color: Color(0xFF0F172A),
+                                        color: titleColor,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: _statusBg(status),
                                       borderRadius: BorderRadius.circular(99),
-                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                      border: Border.all(color: borderColor),
                                     ),
                                     child: Text(
                                       status.replaceAll("_", " "),
@@ -262,7 +288,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-
                               _InfoRow(label: "When:", value: _formatDate(b.scheduledAt)),
                               if ((b.addressText ?? "").trim().isNotEmpty) ...[
                                 const SizedBox(height: 6),
@@ -272,12 +297,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                 const SizedBox(height: 6),
                                 _InfoRow(label: "Note:", value: b.note!.trim()),
                               ],
-
                               const SizedBox(height: 10),
                               Text(
                                 "Tap to view details",
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: cardSub,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -297,8 +321,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 }
 
-/// ---- widgets ----
-
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -307,13 +329,22 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor =
+        isDark ? const Color(0xFFD1D5DB) : const Color(0xFF334155);
+    final labelColor =
+        isDark ? Colors.white : const Color(0xFF0F172A);
+
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 13, color: Color(0xFF334155)),
+        style: TextStyle(fontSize: 13, color: textColor),
         children: [
           TextSpan(
             text: "$label ",
-            style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: labelColor,
+            ),
           ),
           TextSpan(text: value),
         ],
@@ -330,19 +361,27 @@ class _ErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
-        color: const Color(0xFFFEF2F2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+        ),
+        color: isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color:
+                    isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           TextButton(
@@ -363,16 +402,26 @@ class _EmptyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subtitleColor =
+        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF64748B);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Column(
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+          const Text(
+            "No bookings found",
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          ),
           const SizedBox(height: 8),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: subtitleColor,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

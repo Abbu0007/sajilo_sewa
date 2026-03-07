@@ -4,7 +4,7 @@ class ProfileHeader extends StatelessWidget {
   final String name;
   final String phone;
   final String email;
-  final String? avatarUrl; // ✅ ADD
+  final String? avatarUrl;
   final VoidCallback onSettingsTap;
 
   const ProfileHeader({
@@ -55,7 +55,6 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-
           Row(
             children: [
               Stack(
@@ -73,8 +72,6 @@ class ProfileHeader extends StatelessWidget {
                     ),
                     child: _buildAvatar(),
                   ),
-
-                  // verified badge (unchanged)
                   Positioned(
                     right: 0,
                     bottom: 0,
@@ -94,9 +91,7 @@ class ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +133,6 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  /// Avatar logic (network → fallback icon)
   Widget _buildAvatar() {
     if (avatarUrl == null || avatarUrl!.isEmpty) {
       return const Icon(

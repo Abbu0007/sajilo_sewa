@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:sajilo_sewa/features/provider_dashboard/data/datasources/local/provider_local_datasource.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/presentation/widgets/bookings/provider_booking_details_sheet.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/presentation/widgets/ratings/rate_user_sheet.dart';
-
 import '../../data/datasources/remote/provider_remote_datasource.dart';
 import '../../data/repositories/provider_repository_impl.dart';
 import '../../domain/entities/provider_booking_entity.dart';
@@ -23,7 +22,6 @@ class ProviderBookingsScreen extends StatefulWidget {
 
 class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   late final ProviderBookingsController controller;
-
   final List<_StatusTab> _tabs = const [
     _StatusTab(label: "All", value: "all"),
     _StatusTab(label: "Pending", value: "pending"),
@@ -41,7 +39,10 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   void initState() {
     super.initState();
 
-    final repo = ProviderRepositoryImpl(remote: ProviderRemoteDataSource());
+    final repo = ProviderRepositoryImpl(
+      remote: ProviderRemoteDataSource(),
+      local: ProviderLocalDataSourceImpl(),
+    );
 
     controller = ProviderBookingsController(
       getBookings: GetProviderBookingsUseCase(repo),
@@ -78,7 +79,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -139,12 +140,11 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (sheetCtx) {
-        // ✅ Always pop using sheetCtx (never use outer page context)
         Future<void> closeSheet() async {
           if (Navigator.of(sheetCtx).canPop()) {
             Navigator.of(sheetCtx).pop();
@@ -156,7 +156,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
           child: ProviderBookingDetailsSheet(
             booking: b,
             busy: controller.actionBusy,
-
             onAccept: b.status == "pending"
                 ? () async {
                     await controller.acceptBooking(b.id, reloadStatus: _selectedStatus);
@@ -164,7 +163,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                     await closeSheet();
                   }
                 : null,
-
             onReject: b.status == "pending"
                 ? (reason) async {
                     await controller.rejectBooking(
@@ -176,7 +174,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                     await closeSheet();
                   }
                 : null,
-
             onMarkInProgress: (b.status == "confirmed")
                 ? () async {
                     await controller.markInProgress(b.id, reloadStatus: _selectedStatus);
@@ -184,7 +181,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                     await closeSheet();
                   }
                 : null,
-
             onRequestPayment: (b.status == "in_progress")
                 ? (priceText, reason) async {
                     final price = _parseNum(priceText);
@@ -207,21 +203,20 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                     await closeSheet();
                   }
                 : null,
+            onMarkCompleted:
+                (b.status == "awaiting_payment_confirmation" || b.status == "in_progress")
+                    ? () async {
+                        await controller.markCompleted(b.id, reloadStatus: _selectedStatus);
 
-            onMarkCompleted: (b.status == "awaiting_payment_confirmation" || b.status == "in_progress")
-                ? () async {
-                    await controller.markCompleted(b.id, reloadStatus: _selectedStatus);
-
-                    if (!mounted) return;
-                    await closeSheet();
-                    await _openRatingSheet(
-                      bookingId: b.id,
-                      title: "Rate your client",
-                      subtitle: "How was the experience with this client?",
-                    );
-                  }
-                : null,
-
+                        if (!mounted) return;
+                        await closeSheet();
+                        await _openRatingSheet(
+                          bookingId: b.id,
+                          title: "Rate your client",
+                          subtitle: "How was the experience with this client?",
+                        );
+                      }
+                    : null,
             onCancel: (b.status == "confirmed" || b.status == "in_progress" || b.status == "pending")
                 ? (reason) async {
                     await controller.cancelBooking(
@@ -243,12 +238,19 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final refreshBorder = isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final unselectedTabBg = isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6);
+    final unselectedTabBorder = isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final unselectedTabText = isDark ? const Color(0xFFD1D5DB) : const Color(0xFF111827);
 
     return AnimatedBuilder(
       animation: controller,
       builder: (_, __) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: () => controller.load(status: _selectedStatus),
@@ -260,10 +262,9 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                       Expanded(
                         child: Text(
                           "Bookings",
-                          style: TextStyle(
+                          style: textTheme.titleMedium?.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.grey.shade900,
                           ),
                         ),
                       ),
@@ -271,7 +272,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                         decoration: BoxDecoration(
                           color: scheme.primary.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: refreshBorder),
                         ),
                         child: IconButton(
                           tooltip: "Refresh",
@@ -284,7 +285,6 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -329,9 +329,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   SizedBox(
                     height: 42,
                     child: ListView.separated(
@@ -351,17 +349,17 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: selected ? scheme.primary : const Color(0xFFF3F4F6),
+                              color: selected ? scheme.primary : unselectedTabBg,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: selected ? scheme.primary : const Color(0xFFE5E7EB),
+                                color: selected ? scheme.primary : unselectedTabBorder,
                               ),
                             ),
                             child: Text(
                               t.label,
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
-                                color: selected ? Colors.white : const Color(0xFF111827),
+                                color: selected ? Colors.white : unselectedTabText,
                               ),
                             ),
                           ),
@@ -369,9 +367,7 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
                   if (controller.loading && controller.items.isEmpty)
                     const _LoadingBox()
                   else if (controller.error != null && controller.items.isEmpty)
@@ -411,11 +407,13 @@ class _LoadingBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 220,
       margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(18),
       ),
       alignment: Alignment.center,
@@ -429,22 +427,32 @@ class _EmptyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: isDark ? const Color(0xFF161A22) : const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB),
+        ),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.inbox_outlined, color: Color(0xFF6B7280)),
-          SizedBox(width: 10),
+          Icon(
+            Icons.inbox_outlined,
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               "No bookings found for this status.",
-              style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF374151)),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+              ),
             ),
           ),
         ],
@@ -460,20 +468,27 @@ class _ErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFFEF2F2),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
+        color: isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           TextButton(onPressed: onRetry, child: const Text("Retry")),

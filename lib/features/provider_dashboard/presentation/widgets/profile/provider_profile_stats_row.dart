@@ -62,11 +62,19 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : tint;
+    final labelColor =
+        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : Colors.transparent;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: tint,
+        color: bg,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -83,8 +91,8 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF6B7280),
+            style: TextStyle(
+              color: labelColor,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),

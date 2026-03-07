@@ -13,15 +13,21 @@ class ProviderBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = scheme.primary;
+
+    final outerBg = isDark ? const Color(0xFF11161D) : Colors.white;
+    final innerBg = isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6);
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
 
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: outerBg,
+          boxShadow: const [
             BoxShadow(
               blurRadius: 24,
               offset: Offset(0, -8),
@@ -33,9 +39,9 @@ class ProviderBottomNav extends StatelessWidget {
           height: 62,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: innerBg,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             children: [
@@ -44,6 +50,7 @@ class ProviderBottomNav extends StatelessWidget {
                 icon: Icons.home_rounded,
                 active: currentIndex == 0,
                 primary: primary,
+                isDark: isDark,
                 onTap: () => onChanged(0),
               ),
               _NavItem(
@@ -51,6 +58,7 @@ class ProviderBottomNav extends StatelessWidget {
                 icon: Icons.calendar_month_rounded,
                 active: currentIndex == 1,
                 primary: primary,
+                isDark: isDark,
                 onTap: () => onChanged(1),
               ),
               _NavItem(
@@ -58,6 +66,7 @@ class ProviderBottomNav extends StatelessWidget {
                 icon: Icons.person_rounded,
                 active: currentIndex == 2,
                 primary: primary,
+                isDark: isDark,
                 onTap: () => onChanged(2),
               ),
             ],
@@ -73,6 +82,7 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final bool active;
   final Color primary;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -80,11 +90,18 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.active,
     required this.primary,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final inactiveBg = isDark ? const Color(0xFF1B2230) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final inactiveIconColor =
+        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -114,9 +131,9 @@ class _NavItem extends StatelessWidget {
                   height: active ? 42 : 38,
                   width: active ? 42 : 38,
                   decoration: BoxDecoration(
-                    color: active ? primary : Colors.white,
+                    color: active ? primary : inactiveBg,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: borderColor),
                     boxShadow: active
                         ? const [
                             BoxShadow(
@@ -130,7 +147,7 @@ class _NavItem extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 22,
-                    color: active ? Colors.white : const Color(0xFF6B7280),
+                    color: active ? Colors.white : inactiveIconColor,
                   ),
                 ),
               ),

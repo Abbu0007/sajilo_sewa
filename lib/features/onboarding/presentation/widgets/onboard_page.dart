@@ -3,34 +3,52 @@ import 'package:flutter/material.dart';
 class OnboardPage extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String imagePath; // Add this
+  final String imagePath;
 
   const OnboardPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
-    this.imagePath = '', // optional
-  }) : super(key: key);
+    this.imagePath = '',
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (imagePath.isNotEmpty) Image.asset(imagePath, height: 250),
-          const SizedBox(height: 40),
+          if (imagePath.isNotEmpty)
+            Image.asset(
+              imagePath,
+              height: 280,
+              fit: BoxFit.contain,
+            ),
+
+          const SizedBox(height: 50),
+
           Text(
             title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.3,
+            ),
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 18),
+
           Text(
             subtitle,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
             textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

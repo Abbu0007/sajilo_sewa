@@ -31,6 +31,16 @@ class _RatingSheetState extends State<RatingSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final handleColor =
+        isDark ? const Color(0xFF4B5563) : Colors.grey.shade300;
+    final subtitleColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+    final inputFill =
+        isDark ? const Color(0xFF161A22) : const Color(0xFFF9FAFB);
+    final errorColor =
+        isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
 
     return SafeArea(
       child: Padding(
@@ -42,7 +52,7 @@ class _RatingSheetState extends State<RatingSheet> {
               height: 5,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: handleColor,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -52,7 +62,10 @@ class _RatingSheetState extends State<RatingSheet> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -65,12 +78,13 @@ class _RatingSheetState extends State<RatingSheet> {
               alignment: Alignment.centerLeft,
               child: Text(
                 widget.subtitle,
-                style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(height: 14),
-
-            // ⭐ stars
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (i) {
@@ -86,7 +100,6 @@ class _RatingSheetState extends State<RatingSheet> {
                 );
               }),
             ),
-
             const SizedBox(height: 8),
             TextField(
               controller: commentCtrl,
@@ -94,20 +107,23 @@ class _RatingSheetState extends State<RatingSheet> {
               maxLines: 4,
               decoration: InputDecoration(
                 hintText: "Comment (optional)",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 filled: true,
-                fillColor: const Color(0xFFF9FAFB),
+                fillColor: inputFill,
               ),
             ),
-
             if (error != null) ...[
               const SizedBox(height: 10),
               Text(
                 error!,
-                style: const TextStyle(color: Color(0xFFB91C1C), fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: errorColor,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
-
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -121,7 +137,12 @@ class _RatingSheetState extends State<RatingSheet> {
                         });
 
                         try {
-                          await widget.onSubmit(stars, commentCtrl.text.trim().isEmpty ? null : commentCtrl.text.trim());
+                          await widget.onSubmit(
+                            stars,
+                            commentCtrl.text.trim().isEmpty
+                                ? null
+                                : commentCtrl.text.trim(),
+                          );
                           if (!mounted) return;
                           Navigator.pop(context);
                         } catch (e) {
@@ -137,12 +158,16 @@ class _RatingSheetState extends State<RatingSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: scheme.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   elevation: 0,
                 ),
-                child: Text(saving ? "Submitting..." : "Submit Rating",
-                    style: const TextStyle(fontWeight: FontWeight.w900)),
+                child: Text(
+                  saving ? "Submitting..." : "Submit Rating",
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ),
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/utils/url_utils.dart';
 import '../../../domain/entities/provider_booking_entity.dart';
 
 class ProviderBookingCard extends StatelessWidget {
@@ -12,17 +13,14 @@ class ProviderBookingCard extends StatelessWidget {
   });
 
   String _resolveAvatarUrl(String? url) {
-    if (url == null) return "";
-    final u = url.trim();
-    if (u.isEmpty) return "";
-    // Android emulator uses 10.0.2.2 for host machine
-    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+    return UrlUtils.normalizeMediaUrl(url);
   }
 
   String _initials(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return "U";
-    final parts = trimmed.split(RegExp(r"\s+")).where((e) => e.isNotEmpty).toList();
+    final parts =
+        trimmed.split(RegExp(r"\s+")).where((e) => e.isNotEmpty).toList();
     final i1 = parts.isNotEmpty ? parts[0][0] : "U";
     final i2 = parts.length > 1 ? parts[1][0] : "";
     return ("$i1$i2").toUpperCase();
@@ -31,6 +29,7 @@ class ProviderBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final clientName = booking.client?.fullName ?? "Client";
     final serviceName = booking.service?.name ?? "Service";
@@ -38,6 +37,15 @@ class ProviderBookingCard extends StatelessWidget {
     final avatar = _resolveAvatarUrl(booking.client?.avatarUrl);
     final hasAvatar = avatar.isNotEmpty;
     final initials = _initials(clientName);
+
+    final cardBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final avatarBg =
+        isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
 
     return InkWell(
       onTap: onViewDetails,
@@ -47,8 +55,8 @@ class ProviderBookingCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          color: Colors.white,
+          border: Border.all(color: borderColor),
+          color: cardBg,
           boxShadow: const [
             BoxShadow(
               blurRadius: 18,
@@ -63,31 +71,29 @@ class ProviderBookingCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: const Color(0xFFF3F4F6),
+                  backgroundColor: avatarBg,
                   backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
                   child: hasAvatar
                       ? null
                       : Text(
                           initials,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: Colors.black87,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
                 ),
                 const SizedBox(width: 12),
-
-                // title + sub
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "$serviceName • $clientName",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
-                          color: Color(0xFF0F172A),
+                          color: titleColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -96,7 +102,7 @@ class ProviderBookingCard extends StatelessWidget {
                       Text(
                         "Tap to view details",
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: subColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -104,30 +110,30 @@ class ProviderBookingCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(width: 10),
                 _StatusPill(status: booking.status),
               ],
             ),
-
             const SizedBox(height: 12),
-
             _InfoRow(
               icon: Icons.event,
               text: booking.prettyDateTime ?? booking.scheduledAt,
             ),
             if ((booking.addressText ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              _InfoRow(icon: Icons.location_on_outlined, text: booking.addressText!.trim()),
+              _InfoRow(
+                icon: Icons.location_on_outlined,
+                text: booking.addressText!.trim(),
+              ),
             ],
             if ((booking.note ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              _InfoRow(icon: Icons.notes_rounded, text: booking.note!.trim()),
+              _InfoRow(
+                icon: Icons.notes_rounded,
+                text: booking.note!.trim(),
+              ),
             ],
-
             const SizedBox(height: 12),
-
-            // ✅ View details button still available
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -135,11 +141,16 @@ class ProviderBookingCard extends StatelessWidget {
                 icon: Icon(Icons.info_outline, size: 18, color: scheme.primary),
                 label: Text(
                   "View Details",
-                  style: TextStyle(fontWeight: FontWeight.w900, color: scheme.primary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: scheme.primary,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFE5E7EB)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  side: BorderSide(color: borderColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -215,15 +226,21 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B7280)),
+        Icon(
+          icon,
+          size: 16,
+          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Color(0xFF374151),
+            style: TextStyle(
+              color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
               fontWeight: FontWeight.w700,
             ),
           ),

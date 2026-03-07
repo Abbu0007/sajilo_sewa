@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/core/utils/url_utils.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/widgets/bookings/confirm_payment_status.dart';
 import '../../../domain/entities/booking_entity.dart';
 
 class BookingDetailsSheet extends StatefulWidget {
   final BookingEntity booking;
-
   final Future<void> Function(String bookingId, String? reason) onCancel;
   final Future<void> Function(String bookingId) onConfirmPayment;
 
@@ -55,10 +55,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
   }
 
   String _resolveAvatarUrl(String? url) {
-    if (url == null) return "";
-    final u = url.trim();
-    if (u.isEmpty) return "";
-    return u.replaceFirst("http://localhost:5000", "http://10.0.2.2:5000");
+    return UrlUtils.normalizeMediaUrl(url);
   }
 
   String _initials(String name) {
@@ -70,12 +67,10 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
     return ("$i1$i2").toUpperCase();
   }
 
-  /// ✅ IMPORTANT: Never pop twice from inside the callback.
-  /// We open ConfirmPaymentSheet, await its result, then close THIS sheet once.
   Future<void> _openConfirmPayment() async {
     if (acting) return;
 
-    final outerContext = context; // BookingDetailsSheet context
+    final outerContext = context;
     final b = widget.booking;
     final amount = _amountFromPrice(b.price);
 
@@ -85,7 +80,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
       final paid = await showModalBottomSheet<bool>(
         context: outerContext,
         isScrollControlled: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
@@ -94,14 +89,12 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
           child: ConfirmPaymentSheet(
             amount: amount,
             onConfirmPaid: () async {
-              // ✅ Only API call here. No Navigator.pop here.
               await widget.onConfirmPayment(b.id);
             },
           ),
         ),
       );
 
-      // ✅ If confirm sheet returned true, close BookingDetailsSheet safely
       if (paid == true && mounted && Navigator.canPop(outerContext)) {
         Navigator.pop(outerContext);
       }
@@ -118,6 +111,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
   @override
   Widget build(BuildContext context) {
     final b = widget.booking;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final title =
         "${b.service?.name ?? "Service"} • ${b.provider?.fullName ?? "Provider"}";
@@ -138,12 +132,28 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
     final canCancel = status == "pending" || status == "confirmed";
     final canConfirmPayment = status == "awaiting_payment_confirmation";
 
-    // provider box data
     final providerName = (b.provider?.fullName ?? "Provider").trim();
     final providerProfession = (b.provider?.profession ?? "Professional").trim();
     final avatar = _resolveAvatarUrl(b.provider?.avatarUrl);
     final hasAvatar = avatar.isNotEmpty;
     final initials = _initials(providerName);
+
+    final handleColor =
+        isDark ? const Color(0xFF4B5563) : Colors.grey.shade300;
+    final topCardBg =
+        isDark ? const Color(0xFF161A22) : const Color(0xFFF8FAFC);
+    final topCardBorder =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final avatarBg =
+        isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6);
+    final subText =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+    final cancelBg =
+        isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2);
+    final cancelBorder =
+        isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5);
+    final cancelTitle =
+        isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B);
 
     return SafeArea(
       child: Padding(
@@ -160,12 +170,11 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
               height: 5,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: handleColor,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Expanded(
@@ -180,25 +189,21 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                 ),
               ],
             ),
-
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Booking ID: $bookingId",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(color: subText, fontSize: 12),
               ),
             ),
-
             const SizedBox(height: 12),
-
-            // ✅ Provider avatar box (square + bigger)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-                color: const Color(0xFFF8FAFC),
+                border: Border.all(color: topCardBorder),
+                color: topCardBg,
               ),
               child: Row(
                 children: [
@@ -207,7 +212,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                     child: Container(
                       height: 72,
                       width: 72,
-                      color: const Color(0xFFF3F4F6),
+                      color: avatarBg,
                       child: hasAvatar
                           ? Image.network(
                               avatar,
@@ -238,12 +243,15 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(providerName, style: const TextStyle(fontWeight: FontWeight.w900)),
+                        Text(
+                          providerName,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           providerProfession,
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: subText,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -254,9 +262,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             _InfoGrid(
               items: [
                 _InfoItem(label: "When", value: whenText, icon: Icons.calendar_month),
@@ -265,13 +271,9 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                 _InfoItem(label: "Status", value: status, icon: Icons.info_outline),
               ],
             ),
-
             const SizedBox(height: 12),
-
             _Box(label: "Note", value: note),
-
             const SizedBox(height: 14),
-
             if (canConfirmPayment)
               SizedBox(
                 width: double.infinity,
@@ -284,22 +286,24 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                   child: Text(acting ? "Processing..." : "Pay Now"),
                 ),
               ),
-
             if (canCancel) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
-                  color: const Color(0xFFFEF2F2),
+                  border: Border.all(color: cancelBorder),
+                  color: cancelBg,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Cancel booking",
-                      style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF991B1B)),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: cancelTitle,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
@@ -319,7 +323,9 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                             : () async {
                                 setState(() => acting = true);
                                 try {
-                                  final r = reasonCtrl.text.trim().isEmpty ? null : reasonCtrl.text.trim();
+                                  final r = reasonCtrl.text.trim().isEmpty
+                                      ? null
+                                      : reasonCtrl.text.trim();
                                   await widget.onCancel(bookingId, r);
                                   if (mounted) Navigator.pop(context);
                                 } finally {
@@ -337,9 +343,7 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
                 ),
               ),
             ],
-
             const SizedBox(height: 12),
-
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -353,8 +357,6 @@ class _BookingDetailsSheetState extends State<BookingDetailsSheet> {
     );
   }
 }
-
-/// ---- widgets ----
 
 class _InfoGrid extends StatelessWidget {
   final List<_InfoItem> items;
@@ -383,17 +385,26 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final border =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final iconColor =
+        isDark ? const Color(0xFFD1D5DB) : Colors.grey.shade700;
+    final labelColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
+
     return Container(
       width: (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        color: Colors.white,
+        border: Border.all(color: border),
+        color: bg,
       ),
       child: Row(
         children: [
-          Icon(item.icon, size: 18, color: Colors.grey.shade700),
+          Icon(item.icon, size: 18, color: iconColor),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -403,7 +414,7 @@ class _Tile extends StatelessWidget {
                   item.label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: labelColor,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -425,13 +436,20 @@ class _Box extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final border =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final labelColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        color: Colors.white,
+        border: Border.all(color: border),
+        color: bg,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +458,7 @@ class _Box extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: labelColor,
               fontWeight: FontWeight.w700,
             ),
           ),

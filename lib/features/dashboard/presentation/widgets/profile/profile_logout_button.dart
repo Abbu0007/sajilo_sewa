@@ -7,8 +7,11 @@ class ProfileLogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF2A1517) : const Color(0xFFFFF1F2);
+
     return Material(
-      color: const Color(0xFFFFF1F2),
+      color: bg,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,

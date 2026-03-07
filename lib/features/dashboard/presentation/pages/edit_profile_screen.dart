@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/utils/avatar_picker.dart';
 import 'package:sajilo_sewa/features/dashboard/presentation/view_model/profile_view_model.dart';
 
-
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -62,6 +61,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final action = await showModalBottomSheet<_AvatarAction>(
       context: context,
       showDragHandle: true,
+      backgroundColor: Theme.of(context).cardColor,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
@@ -125,7 +125,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           firstName: _firstNameCtrl.text.trim(),
           lastName: _lastNameCtrl.text.trim(),
           phone: _phoneCtrl.text.trim(),
-          // email not sent by default; add only if backend allows updating it
         );
 
     if (!mounted) return;
@@ -134,7 +133,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Profile updated")),
       );
-      Navigator.pop(context, true); // return true so ProfileScreen can refresh
+      Navigator.pop(context, true);
     } else {
       final err = ref.read(profileViewModelProvider).error ?? "Update failed";
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,19 +146,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(profileViewModelProvider);
     final profile = state.profile;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Keep controllers in sync once profile arrives
     WidgetsBinding.instance.addPostFrameCallback((_) => _prefillOnce());
 
     final avatarUrl = profile?.avatarUrl ?? "";
     final isBusy = state.isLoading || state.isSaving;
 
+    final pageBg = Theme.of(context).scaffoldBackgroundColor;
+    final appBarBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final avatarShellBg = isDark ? const Color(0xFF1B2230) : Colors.grey.withOpacity(0.2);
+    final avatarBorder = isDark ? const Color(0xFF2A3140) : Colors.white;
+    final cameraBg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final cameraBorder = isDark ? const Color(0xFF2A3140) : Colors.grey.shade200;
+    final errorBg = isDark ? const Color(0xFF2A1517) : const Color(0xFFFFECEC);
+    final errorBorder = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFFC9C9);
+    final errorText = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB00020);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: pageBg,
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: appBarBg,
+        surfaceTintColor: appBarBg,
       ),
       body: SafeArea(
         child: state.isLoading && profile == null
@@ -168,7 +177,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
                 child: Column(
                   children: [
-                    // Avatar section
                     Center(
                       child: Stack(
                         children: [
@@ -177,13 +185,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             height: 92,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.grey.withOpacity(0.2),
-                              border: Border.all(color: Colors.white, width: 3),
+                              color: avatarShellBg,
+                              border: Border.all(color: avatarBorder, width: 3),
                               boxShadow: [
                                 BoxShadow(
                                   blurRadius: 18,
                                   spreadRadius: 0,
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withOpacity(isDark ? 0.18 : 0.08),
                                   offset: const Offset(0, 8),
                                 )
                               ],
@@ -219,9 +227,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cameraBg,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.grey.shade200),
+                                  border: Border.all(color: cameraBorder),
                                 ),
                                 child: Icon(
                                   Icons.camera_alt_outlined,
@@ -234,30 +242,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 18),
-
                     if (state.error != null)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFECEC),
+                          color: errorBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFFC9C9)),
+                          border: Border.all(color: errorBorder),
                         ),
                         child: Text(
                           state.error!,
-                          style: const TextStyle(
-                            color: Color(0xFFB00020),
+                          style: TextStyle(
+                            color: errorText,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-
                     const SizedBox(height: 14),
-
-                    // Form
                     Form(
                       key: _formKey,
                       child: Column(
@@ -266,40 +269,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           TextFormField(
                             controller: _firstNameCtrl,
                             textInputAction: TextInputAction.next,
-                            decoration: _inputDecoration(hint: "Enter first name"),
+                            decoration: _inputDecoration(context, hint: "Enter first name"),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) return "First name is required";
                               return null;
                             },
                           ),
                           const SizedBox(height: 12),
-
                           _fieldLabel("Last Name"),
                           TextFormField(
                             controller: _lastNameCtrl,
                             textInputAction: TextInputAction.next,
-                            decoration: _inputDecoration(hint: "Enter last name"),
+                            decoration: _inputDecoration(context, hint: "Enter last name"),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) return "Last name is required";
                               return null;
                             },
                           ),
                           const SizedBox(height: 12),
-
                           _fieldLabel("Email"),
                           TextFormField(
                             controller: _emailCtrl,
-                            enabled: false, // recommended: keep email readonly
-                            decoration: _inputDecoration(hint: "Email"),
+                            enabled: false,
+                            decoration: _inputDecoration(context, hint: "Email"),
                           ),
                           const SizedBox(height: 12),
-
                           _fieldLabel("Phone Number"),
                           TextFormField(
                             controller: _phoneCtrl,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.done,
-                            decoration: _inputDecoration(hint: "Enter phone number"),
+                            decoration: _inputDecoration(context, hint: "Enter phone number"),
                             validator: (v) {
                               if (v == null || v.trim().isEmpty) return "Phone number is required";
                               if (v.trim().length < 7) return "Enter a valid phone number";
@@ -309,9 +309,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 18),
-
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -350,39 +348,49 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _fieldLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF111827),
+            color: isDark ? Colors.white : const Color(0xFF111827),
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration({required String hint}) {
+  InputDecoration _inputDecoration(BuildContext context, {required String hint}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fillColor = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF2A3140) : Colors.grey.shade200;
+
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: fillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: borderColor),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: borderColor),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFF5B4FFF), width: 1.4),
       ),
     );
   }

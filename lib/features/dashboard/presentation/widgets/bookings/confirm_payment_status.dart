@@ -20,6 +20,12 @@ class _ConfirmPaymentSheetState extends State<ConfirmPaymentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final handleColor =
+        isDark ? const Color(0xFF4B5563) : Colors.grey.shade300;
+    final subColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -35,7 +41,7 @@ class _ConfirmPaymentSheetState extends State<ConfirmPaymentSheet> {
               height: 5,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: handleColor,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -59,14 +65,13 @@ class _ConfirmPaymentSheetState extends State<ConfirmPaymentSheet> {
               child: Text(
                 "Amount: Rs ${widget.amount}",
                 style: TextStyle(
-                  color: Colors.grey.shade700,
+                  color: subColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
             const SizedBox(height: 12),
-
             _MethodTile(
               selected: method == "cash",
               title: "Cash",
@@ -82,7 +87,6 @@ class _ConfirmPaymentSheetState extends State<ConfirmPaymentSheet> {
               icon: Icons.qr_code_rounded,
               onTap: () => setState(() => method = "qr"),
             ),
-
             const SizedBox(height: 16),
             Row(
               children: [
@@ -150,8 +154,20 @@ class _MethodTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = selected ? const Color(0xFF86EFAC) : const Color(0xFFE5E7EB);
-    final bg = selected ? const Color(0xFFECFDF5) : Colors.white;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final border = selected
+        ? const Color(0xFF86EFAC)
+        : (isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB));
+    final bg = selected
+        ? const Color(0xFFECFDF5)
+        : (isDark ? const Color(0xFF161A22) : Colors.white);
+    final iconBg = selected
+        ? const Color(0xFF059669)
+        : (isDark ? const Color(0xFF1B2230) : const Color(0xFFF3F4F6));
+    final iconColor = selected ? Colors.white : (isDark ? const Color(0xFFD1D5DB) : Colors.black54);
+    final subtitleColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
 
     return InkWell(
       onTap: onTap,
@@ -170,9 +186,9 @@ class _MethodTile extends StatelessWidget {
               width: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: selected ? const Color(0xFF059669) : const Color(0xFFF3F4F6),
+                color: iconBg,
               ),
-              child: Icon(icon, color: selected ? Colors.white : Colors.black54),
+              child: Icon(icon, color: iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -181,7 +197,10 @@ class _MethodTile extends StatelessWidget {
                 children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 3),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: subtitleColor, fontSize: 12),
+                  ),
                 ],
               ),
             ),

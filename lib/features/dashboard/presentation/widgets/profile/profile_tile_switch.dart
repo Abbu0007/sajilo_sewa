@@ -20,10 +20,17 @@ class ProfileTileSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : Colors.transparent;
+    final titleColor = isDark ? Colors.white : const Color(0xFF111827);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bg,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -41,8 +48,8 @@ class ProfileTileSwitch extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: Color(0xFF111827),
+              style: TextStyle(
+                color: titleColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),

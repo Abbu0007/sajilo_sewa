@@ -11,7 +11,6 @@ import 'register_role_selector.dart';
 import 'profession_field.dart';
 import 'terms_checkbox.dart';
 import 'create_account_button.dart';
-import 'social_buttons.dart';
 import 'signin_link.dart';
 
 class RegisterForm extends ConsumerStatefulWidget {
@@ -393,7 +392,6 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             ),
 
             const SizedBox(height: 10),
-            const SocialButtons(),
             const SizedBox(height: 10),
             const SignInLink(),
           ],

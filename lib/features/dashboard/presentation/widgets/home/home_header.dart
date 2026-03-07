@@ -16,25 +16,44 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subtitleColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
+    final logoBg =
+        isDark ? const Color(0xFF1B2230) : const Color(0xFFEFF6FF);
+
     return Row(
       children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor: Color(0xFFEFF6FF),
+          backgroundColor: logoBg,
           child: Image.asset(
-                  "assets/images/sajilo_sewa_logo.png",
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, color: Colors.grey),
-                ),
+            "assets/images/sajilo_sewa_logo.png",
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.image_not_supported, color: Colors.grey),
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: subtitleColor,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ),
@@ -50,14 +69,19 @@ class HomeHeader extends StatelessWidget {
                 right: 8,
                 top: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE11D48),
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
                     unreadCount > 99 ? "99+" : unreadCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sajilo_sewa/app/routes/app_routes.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/login/divider_text.dart';
 import 'package:sajilo_sewa/features/auth/presentation/widgets/login/email_field.dart';
 import 'package:sajilo_sewa/features/auth/presentation/widgets/login/password_field.dart';
 import 'package:sajilo_sewa/features/auth/presentation/widgets/login/remember_forgot_row.dart';
 import 'package:sajilo_sewa/features/auth/presentation/widgets/login/sign_in_button.dart';
 import 'package:sajilo_sewa/features/auth/presentation/widgets/login/sign_up_text.dart';
-import 'package:sajilo_sewa/features/auth/presentation/widgets/login/social_login_button.dart';
 import '../providers/auth_providers.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -114,23 +112,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Column(
         children: const [
           SizedBox(height: 20),
-          Icon(Icons.home, size: 40, color: Colors.white),
-          SizedBox(height: 20),
-          Text(
-            'Welcome Back',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+
+          Image(
+            image: AssetImage('assets/images/sajilo_sewa_logo.png'),
+            height: 120,
           ),
-          SizedBox(height: 8),
+
+          SizedBox(height: 20),
+
           Text(
-            'Sign in to book your home services',
-            style: TextStyle(fontSize: 14, color: Colors.white70),
+            'Welcome to Sajilo Sewa',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          SizedBox(height: 8),
+
+          Text(
+            'Book trusted home services easily',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
-      ),
+      )
     );
   }
 
@@ -169,31 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SignInButton(onPressed: isLoading ? () {} : _login),
 
           const SizedBox(height: 24),
-          const DividerText(),
           const SizedBox(height: 24),
-
-          SocialLoginButton(
-            icon: Icons.g_mobiledata,
-            label: 'Continue with Google',
-            onPressed: () {},
-            iconColor: Colors.red,
-          ),
-          const SizedBox(height: 7),
-
-          SocialLoginButton(
-            icon: Icons.facebook,
-            label: 'Continue with Facebook',
-            onPressed: () {},
-            iconColor: Color(0xFF1877F2),
-          ),
-          const SizedBox(height: 7),
-
-          SocialLoginButton(
-            icon: Icons.apple,
-            label: 'Continue with Apple',
-            onPressed: () {},
-            iconColor: Color.fromARGB(255, 146, 155, 167),
-          ),
 
           const SizedBox(height: 24),
 

@@ -22,19 +22,34 @@ class ProviderProfileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final titleColor = enabled
+        ? (isDark ? Colors.white : const Color(0xFF111827))
+        : const Color(0xFF9CA3AF);
+    final trailingColor = const Color(0xFF9CA3AF);
+    final chevronColor =
+        isDark ? const Color(0xFF6B7280) : Colors.grey.shade400;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.18)
+        : Colors.black.withOpacity(0.06);
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : Colors.transparent;
+
     return InkWell(
       onTap: enabled ? onTap : null,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
               blurRadius: 18,
               spreadRadius: 0,
-              color: Colors.black.withOpacity(0.06),
+              color: shadowColor,
               offset: const Offset(0, 8),
             )
           ],
@@ -56,20 +71,20 @@ class ProviderProfileTile extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: enabled ? const Color(0xFF111827) : const Color(0xFF9CA3AF),
+                  color: titleColor,
                 ),
               ),
             ),
             if ((trailingText ?? '').trim().isNotEmpty)
               Text(
                 trailingText!,
-                style: const TextStyle(
-                  color: Color(0xFF9CA3AF),
+                style: TextStyle(
+                  color: trailingColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400),
+            Icon(Icons.chevron_right, color: chevronColor),
           ],
         ),
       ),

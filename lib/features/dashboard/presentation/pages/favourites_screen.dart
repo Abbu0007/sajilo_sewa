@@ -30,7 +30,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -58,7 +58,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -75,7 +75,9 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
             Navigator.pop(context);
             if (serviceId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Service not found for this provider.")),
+                const SnackBar(
+                  content: Text("Service not found for this provider."),
+                ),
               );
               return;
             }
@@ -88,11 +90,23 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subtitleColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade600;
+    final emptyColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+    final errorBg =
+        isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2);
+    final errorBorder =
+        isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5);
+    final errorText =
+        isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B);
+
     return AnimatedBuilder(
       animation: controller,
       builder: (_, __) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: controller.load,
@@ -106,10 +120,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     "Your favourite providers.",
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 14),
-
                   if (controller.loading)
                     const Center(
                       child: Padding(
@@ -122,16 +138,16 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFCA5A5)),
-                        color: const Color(0xFFFEF2F2),
+                        border: Border.all(color: errorBorder),
+                        color: errorBg,
                       ),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
                               controller.error!,
-                              style: const TextStyle(
-                                color: Color(0xFF991B1B),
+                              style: TextStyle(
+                                color: errorText,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -150,7 +166,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                         "No favourites yet",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey.shade700,
+                          color: emptyColor,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -170,11 +186,16 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                         onBookNow: () {
                           if (serviceId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Service not found for this provider.")),
+                              const SnackBar(
+                                content: Text("Service not found for this provider."),
+                              ),
                             );
                             return;
                           }
-                          _openBookingSheet(providerId: p.id, serviceId: serviceId);
+                          _openBookingSheet(
+                            providerId: p.id,
+                            serviceId: serviceId,
+                          );
                         },
                       );
                     }).toList(),

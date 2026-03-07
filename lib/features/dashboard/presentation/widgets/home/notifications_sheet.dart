@@ -9,6 +9,12 @@ class HomeNotificationsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final handleColor =
+        isDark ? const Color(0xFF4B5563) : Colors.grey.shade300;
+    final emptyTextColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+
     return AnimatedBuilder(
       animation: controller,
       builder: (_, __) {
@@ -22,17 +28,20 @@ class HomeNotificationsSheet extends StatelessWidget {
                   height: 5,
                   width: 44,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: handleColor,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         "Notifications",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
                       ),
                     ),
                     IconButton(
@@ -42,44 +51,25 @@ class HomeNotificationsSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-
                 if (controller.loading)
                   const Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (controller.error != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      color: const Color(0xFFFEF2F2),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            controller.error!,
-                            style: const TextStyle(
-                              color: Color(0xFF991B1B),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: controller.load,
-                          child: const Text("Retry"),
-                        ),
-                      ],
-                    ),
+                  _ClientNotificationsErrorBox(
+                    message: controller.error!,
+                    onRetry: controller.load,
                   )
                 else if (controller.items.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 22),
                     child: Text(
                       "No notifications at the moment",
-                      style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: emptyTextColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   )
                 else
@@ -90,7 +80,6 @@ class HomeNotificationsSheet extends StatelessWidget {
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         final n = controller.items[i];
-
                         final isRatingRequest = (n.type ?? "") == "rating_request";
                         final bookingId = (n.bookingId ?? "").trim();
 
@@ -100,8 +89,10 @@ class HomeNotificationsSheet extends StatelessWidget {
                               await showModalBottomSheet(
                                 context: context,
                                 isScrollControlled: true,
+                                backgroundColor: Theme.of(context).cardColor,
                                 shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+                                  borderRadius:
+                                      BorderRadius.vertical(top: Radius.circular(22)),
                                 ),
                                 builder: (_) => Padding(
                                   padding: EdgeInsets.only(
@@ -124,41 +115,16 @@ class HomeNotificationsSheet extends StatelessWidget {
                               return;
                             }
 
-                            // normal: mark read
                             if (!n.isRead) {
                               await controller.markAsReadAndRefresh(n.id);
                             }
                           },
                           borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              color: n.isRead ? const Color(0xFFF3F4F6) : const Color(0xFFEFF6FF),
-                              border: Border.all(color: const Color(0xFFE5E7EB)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        n.title,
-                                        style: const TextStyle(fontWeight: FontWeight.w900),
-                                      ),
-                                    ),
-                                    if (isRatingRequest)
-                                      const Icon(Icons.star, color: Colors.amber, size: 18),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  n.message,
-                                  style: TextStyle(color: Colors.grey.shade700),
-                                ),
-                              ],
-                            ),
+                          child: _ClientNotificationTile(
+                            title: n.title,
+                            message: n.message,
+                            isRead: n.isRead,
+                            isRatingRequest: isRatingRequest,
                           ),
                         );
                       },
@@ -169,6 +135,109 @@ class HomeNotificationsSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ClientNotificationTile extends StatelessWidget {
+  final String title;
+  final String message;
+  final bool isRead;
+  final bool isRatingRequest;
+
+  const _ClientNotificationTile({
+    required this.title,
+    required this.message,
+    required this.isRead,
+    required this.isRatingRequest,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final readBg =
+        isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6);
+    final unreadBg =
+        isDark ? const Color(0xFF1A2333) : const Color(0xFFEFF6FF);
+    final border =
+        isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final messageColor =
+        isDark ? const Color(0xFF9CA3AF) : Colors.grey.shade700;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: isRead ? readBg : unreadBg,
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+              if (isRatingRequest)
+                const Icon(Icons.star, color: Colors.amber, size: 18),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: TextStyle(color: messageColor),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClientNotificationsErrorBox extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ClientNotificationsErrorBox({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color:
+                    isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text("Retry"),
+          ),
+        ],
+      ),
     );
   }
 }

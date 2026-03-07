@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -101,8 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
     await homeController.load();
-    await notifController.load();
-  }
+    await notifController.load();  }
 
   Future<void> _openBookingSheet({
     required String providerId,
@@ -111,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -136,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -152,7 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
             final serviceId = _serviceIdFromSlug(p.serviceSlug ?? "");
             if (serviceId == null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Service not found for this provider.")),
+                const SnackBar(
+                  content: Text("Service not found for this provider."),
+                ),
               );
               return;
             }
@@ -170,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
       animation: Listenable.merge([homeController, notifController, favController]),
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -188,32 +189,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTapNotifications: _openNotifications,
                   ),
                   const SizedBox(height: 14),
-
                   HomeSearchBox(
                     hint: "Search for services...",
                     onChanged: (_) {},
                   ),
                   const SizedBox(height: 14),
-
-                  HomePromoCard(
-                    title: "Get 20% Off",
-                    subtitle: "On your first service booking",
-                    buttonText: "Book Now",
-                    onTap: () {},
+                  const HomePromoCard(
+                    title: "Welcome to Sajilo Sewa",
+                    subtitle:
+                        "Book your service providers for your daily home services.",
                   ),
                   const SizedBox(height: 18),
-
                   HomeSectionHeader(
                     title: "All Services",
                     actionText: "View All",
                     onAction: () {},
                   ),
                   const SizedBox(height: 12),
-
                   if (homeController.loading && homeController.services.isEmpty)
                     const HomeLoadingBox(height: 160)
-                  else if (homeController.error != null && homeController.services.isEmpty)
-                    HomeErrorBox(message: homeController.error!, onRetry: homeController.load)
+                  else if (homeController.error != null &&
+                      homeController.services.isEmpty)
+                    HomeErrorBox(
+                      message: homeController.error!,
+                      onRetry: homeController.load,
+                    )
                   else
                     HomeServicesGrid(
                       itemCount: homeController.homeServices.length,
@@ -241,20 +241,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-
                   const SizedBox(height: 18),
-
                   HomeSectionHeader(
                     title: "Top Rated Providers",
                     actionText: "View All",
                     onAction: () {},
                   ),
                   const SizedBox(height: 12),
-
                   if (homeController.loading && homeController.topRated.isEmpty)
                     const HomeLoadingBox(height: 200)
-                  else if (homeController.error != null && homeController.topRated.isEmpty)
-                    HomeErrorBox(message: homeController.error!, onRetry: homeController.load)
+                  else if (homeController.error != null &&
+                      homeController.topRated.isEmpty)
+                    HomeErrorBox(
+                      message: homeController.error!,
+                      onRetry: homeController.load,
+                    )
                   else if (homeController.topRated.isEmpty)
                     const HomeEmptyBox(text: "No top-rated providers yet.")
                   else

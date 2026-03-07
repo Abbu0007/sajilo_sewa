@@ -20,13 +20,24 @@ class ProfileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF161A22) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3140) : Colors.transparent;
+    final titleColor = isDark ? Colors.white : const Color(0xFF111827);
+    final trailingColor = const Color(0xFF9CA3AF);
+
     return Material(
-      color: Colors.white,
+      color: bg,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
@@ -43,8 +54,8 @@ class ProfileTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF111827),
+                  style: TextStyle(
+                    color: titleColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -53,8 +64,8 @@ class ProfileTile extends StatelessWidget {
               if (trailingText != null) ...[
                 Text(
                   trailingText!,
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
+                  style: TextStyle(
+                    color: trailingColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),

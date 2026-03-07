@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/data/datasources/local/provider_local_datasource.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/presentation/widgets/home/provider_notifications_sheet.dart';
 import 'package:sajilo_sewa/features/provider_dashboard/presentation/widgets/ratings/rate_user_sheet.dart';
 import '../../data/datasources/remote/provider_remote_datasource.dart';
@@ -25,14 +26,16 @@ class ProviderHomeScreen extends StatefulWidget {
 class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   late final ProviderHomeController controller;
   late final ProviderNotificationsController notifController;
-
   late final CreateRatingUseCase createRating;
 
   @override
   void initState() {
     super.initState();
 
-    final repo = ProviderRepositoryImpl(remote: ProviderRemoteDataSource());
+    final repo = ProviderRepositoryImpl(
+      remote: ProviderRemoteDataSource(),
+      local: ProviderLocalDataSourceImpl(),
+    );
 
     controller = ProviderHomeController(
       getMe: GetProviderMeUseCase(repo),
@@ -61,6 +64,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
   Future<void> _openRatingFromNotification(ProviderNotificationEntity n) async {
     if (!n.isRatingRequest) return;
+
     final bookingId = (n.bookingId ?? '').trim();
     if (bookingId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,10 +72,11 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
       );
       return;
     }
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -88,14 +93,17 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                 stars: stars,
                 comment: comment,
               );
+
               if (!mounted) return;
               Navigator.of(context).pop();
               Navigator.of(context).pop();
-             ScaffoldMessenger.of(context).showSnackBar(
+
+              ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Thanks! Rating submitted.")),
               );
             } catch (e) {
               String message = "Something went wrong";
+
               if (e is DioException) {
                 final data = e.response?.data;
                 if (data is Map && data['message'] != null) {
@@ -106,7 +114,9 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
               } else {
                 message = e.toString().replaceFirst("Exception: ", "");
               }
+
               if (!mounted) return;
+
               if (message.toLowerCase().contains("already")) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +129,6 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
               }
             }
           },
-          
         ),
       ),
     );
@@ -132,7 +141,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -184,6 +193,12 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final tipBg = isDark ? const Color(0xFF161A22) : const Color(0xFFF9FAFB);
+    final tipBorder = isDark ? const Color(0xFF2A3140) : const Color(0xFFE5E7EB);
+    final tipText = isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151);
 
     return AnimatedBuilder(
       animation: Listenable.merge([controller, notifController]),
@@ -198,10 +213,13 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Provider Dashboard",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   _bellWithBadge(
@@ -215,7 +233,10 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
               if (controller.loading && controller.me == null)
                 const _LoadingBox(height: 110)
               else if (controller.error != null && controller.me == null)
-                _ErrorBox(message: controller.error!, onRetry: controller.load)
+                _ErrorBox(
+                  message: controller.error!,
+                  onRetry: controller.load,
+                )
               else
                 ProviderWelcomeHeader(
                   firstName: controller.me?.firstName ?? "Provider",
@@ -223,9 +244,12 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              Text(
                 "Quick Stats",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                style: textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 10),
 
@@ -241,9 +265,9 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
+                  color: tipBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  border: Border.all(color: tipBorder),
                 ),
                 child: Row(
                   children: [
@@ -254,13 +278,19 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                         color: scheme.primary.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.lightbulb_outline, color: scheme.primary),
+                      child: Icon(
+                        Icons.lightbulb_outline,
+                        color: scheme.primary,
+                      ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         "Tip: Mark booking as completed only after finishing the service. Then rating request will go to both sides.",
-                        style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF374151)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: tipText,
+                        ),
                       ),
                     ),
                   ],
@@ -280,10 +310,12 @@ class _LoadingBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: isDark ? const Color(0xFF161A22) : const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(18),
       ),
       alignment: Alignment.center,
@@ -299,22 +331,32 @@ class _ErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFFEF2F2),
-        border: Border.all(color: const Color(0xFFFCA5A5)),
+        color: isDark ? const Color(0xFF2A1517) : const Color(0xFFFEF2F2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text("Retry")),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text("Retry"),
+          ),
         ],
       ),
     );

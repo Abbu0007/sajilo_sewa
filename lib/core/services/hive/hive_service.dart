@@ -1,10 +1,20 @@
 import 'package:dartz/dartz.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/data/models/provider_booking_hive_model.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/data/models/provider_me_hive_model.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/data/models/provider_notification_hive_model.dart';
+import 'package:sajilo_sewa/features/provider_dashboard/data/models/provider_profile_hive_model.dart';
 
 import '../../constants/hive_table_constants.dart';
 import '../../error/failures.dart';
 import '../../services/storage/user_session_service.dart';
 import '../../../features/auth/data/models/user_hive_model.dart';
+import '../../../features/dashboard/data/models/service_hive_model.dart';
+import '../../../features/dashboard/data/models/provider_hive_model.dart';
+import '../../../features/dashboard/data/models/booking_hive_model.dart';
+import '../../../features/dashboard/data/models/notification_hive_model.dart';
+import '../../../features/dashboard/data/models/profile_hive_model.dart';
+import '../../../features/dashboard/data/models/profile_stats_hive_model.dart';
 
 class HiveService {
   HiveService._();
@@ -25,8 +35,57 @@ class HiveService {
         Hive.registerAdapter(UserHiveModelAdapter());
       }
 
+      if (!Hive.isAdapterRegistered(ServiceHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ServiceHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProviderHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProviderHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(BookingHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(BookingHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(NotificationHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(NotificationHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProfileHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProfileHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProfileStatsHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProfileStatsHiveModelAdapter());
+      }
+      if (!Hive.isAdapterRegistered(ProviderMeHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProviderMeHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProviderProfileHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProviderProfileHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProviderBookingHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProviderBookingHiveModelAdapter());
+      }
+
+      if (!Hive.isAdapterRegistered(ProviderNotificationHiveModelAdapter().typeId)) {
+        Hive.registerAdapter(ProviderNotificationHiveModelAdapter());
+      }
+
       await Hive.openBox<UserHiveModel>(HiveTableConstants.usersBox);
       await Hive.openBox<String>(HiveTableConstants.professionsBox);
+      await Hive.openBox<ServiceHiveModel>(HiveTableConstants.servicesBox);
+      await Hive.openBox<ProviderHiveModel>(HiveTableConstants.providersBox);
+      await Hive.openBox<BookingHiveModel>(HiveTableConstants.bookingsBox);
+      await Hive.openBox<NotificationHiveModel>(HiveTableConstants.notificationsBox);
+      await Hive.openBox<ProfileHiveModel>(HiveTableConstants.profileBox);
+      await Hive.openBox<ProfileStatsHiveModel>(HiveTableConstants.profileStatsBox);
+      await Hive.openBox<ProviderMeHiveModel>(HiveTableConstants.providerMeBox);
+      await Hive.openBox<ProviderProfileHiveModel>(HiveTableConstants.providerProfileBox);
+      await Hive.openBox<ProviderBookingHiveModel>(HiveTableConstants.providerBookingsBox);
+      await Hive.openBox<ProviderNotificationHiveModel>(HiveTableConstants.providerNotificationsBox);
 
       await _createAdminIfNotExists();
 
@@ -64,10 +123,7 @@ class HiveService {
     required String phone,
     required String role,
     String? profession,
-
-    // ✅ NEW
     String? serviceSlug,
-
     required String token,
   }) async {
     try {
@@ -79,7 +135,7 @@ class HiveService {
         fullName: fullName.trim(),
         email: normalizedEmail,
         phone: phone.trim(),
-        password: '', // ✅ do not store API password
+        password: '',
         role: role,
         profession: profession,
         createdAt: DateTime.now(),
@@ -91,8 +147,6 @@ class HiveService {
         userKey: normalizedEmail,
         role: role,
         token: token,
-
-        // ✅ NEW
         serviceSlug: serviceSlug,
       );
 
@@ -107,10 +161,8 @@ class HiveService {
     required String email,
     required String phone,
     required String password,
-    required String role, // client | provider
+    required String role,
     String? profession,
-
-    // ✅ NEW
     String? serviceSlug,
   }) async {
     try {
@@ -133,7 +185,6 @@ class HiveService {
           return left(ValidationFailure(message: 'Profession is required.'));
         }
 
-        // ✅ NEW: serviceSlug required for provider
         final s = serviceSlug?.trim() ?? '';
         if (s.isEmpty) {
           return left(ValidationFailure(message: 'Service is required.'));
@@ -155,13 +206,10 @@ class HiveService {
 
       await usersBox.put(normalizedEmail, user);
 
-      // offline session (no token)
       await UserSessionService.instance.saveSession(
         userKey: normalizedEmail,
         role: role,
         token: '',
-
-        // ✅ NEW
         serviceSlug: role == 'provider' ? serviceSlug?.trim() : null,
       );
 
@@ -188,7 +236,6 @@ class HiveService {
         return left(AuthFailure(message: 'Invalid credentials.'));
       }
 
-      // offline session (no token)
       await UserSessionService.instance.saveSession(
         userKey: normalizedEmail,
         role: user.role,
