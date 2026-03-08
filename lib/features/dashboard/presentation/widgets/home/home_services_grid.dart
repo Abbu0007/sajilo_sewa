@@ -12,13 +12,26 @@ class HomeServicesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    int crossAxisCount = 2;
+    double childAspectRatio = 2.2;
+
+    if (width >= 900) {
+      crossAxisCount = 4;
+      childAspectRatio = 2.4;
+    } else if (width >= 600) {
+      crossAxisCount = 3;
+      childAspectRatio = 2.3;
+    }
+
     return GridView.builder(
       itemCount: itemCount,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.35,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: childAspectRatio,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),

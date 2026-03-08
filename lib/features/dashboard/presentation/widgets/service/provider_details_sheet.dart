@@ -36,141 +36,151 @@ class ProviderDetailsSheet extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 5,
-              width: 44,
-              decoration: BoxDecoration(
-                color: handleColor,
-                borderRadius: BorderRadius.circular(99),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 5,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: handleColor,
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Provider Details",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                  ),
-                ),
-                IconButton(
-                  onPressed: onToggleFavourite,
-                  icon: Icon(
-                    isFavourite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: isFavourite ? Colors.red : Colors.black54,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            CircleAvatar(
-              radius: 34,
-              backgroundColor: avatarBg,
-              backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
-              child: avatar.isNotEmpty
-                  ? null
-                  : Text(
-                      initials,
-                      style: const TextStyle(
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      "Provider Details",
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        fontSize: 18,
                       ),
                     ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              provider.fullName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              provider.profession,
-              style: TextStyle(
-                color: professionColor,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                _StatChip(
-                  icon: Icons.star_rounded,
-                  iconColor: Colors.orange,
-                  text:
-                      "${provider.avgRating.toStringAsFixed(1)} (${provider.ratingCount})",
-                ),
-                _StatChip(
-                  icon: Icons.work_outline_rounded,
-                  text: "${provider.completedJobs} jobs",
-                ),
-                _StatChip(
-                  icon: Icons.payments_outlined,
-                  text: "From Rs. ${provider.startingPrice}",
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _InfoTile(
-              icon: Icons.phone,
-              label: "Phone",
-              value: phone.isEmpty ? "Not provided" : phone,
-            ),
-            const SizedBox(height: 10),
-            _InfoTile(
-              icon: Icons.mail_outline,
-              label: "Email",
-              value: email.isEmpty ? "Not provided" : email,
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
+                  ),
+                  IconButton(
+                    onPressed: onToggleFavourite,
+                    icon: Icon(
+                      isFavourite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color: isFavourite
+                          ? Colors.red
+                          : (isDark ? Colors.white70 : Colors.black54),
+                    ),
+                  ),
+                  IconButton(
                     onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text("Close"),
+                    icon: const Icon(Icons.close),
                   ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              CircleAvatar(
+                radius: 34,
+                backgroundColor: avatarBg,
+                backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
+                child: avatar.isNotEmpty
+                    ? null
+                    : Text(
+                        initials,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                provider.fullName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onBook,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text("Book Now"),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                provider.profession,
+                style: TextStyle(
+                  color: professionColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _StatChip(
+                    icon: Icons.star_rounded,
+                    iconColor: Colors.orange,
+                    text:
+                        "${provider.avgRating.toStringAsFixed(1)} (${provider.ratingCount})",
                   ),
-                ),
-              ],
-            ),
-          ],
+                  _StatChip(
+                    icon: Icons.work_outline_rounded,
+                    text: "${provider.completedJobs} jobs",
+                  ),
+                  _StatChip(
+                    icon: Icons.payments_outlined,
+                    text: "From Rs. ${provider.startingPrice}",
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _InfoTile(
+                icon: Icons.phone,
+                label: "Phone",
+                value: phone.isEmpty ? "Not provided" : phone,
+              ),
+              const SizedBox(height: 10),
+              _InfoTile(
+                icon: Icons.mail_outline,
+                label: "Email",
+                value: email.isEmpty ? "Not provided" : email,
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text("Close"),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onBook,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text("Book Now"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
